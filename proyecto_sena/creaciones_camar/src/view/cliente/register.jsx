@@ -1,0 +1,155 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { apiFetch } from "../utils/api";
+
+export default function Register() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    p_nom_usuario: "",
+    p_ape_usuario: "",
+    correo: "",
+    telefono: "",
+    password: "",
+    confirmarPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [exito, setExito] = useState("");
+  const [cargando, setCargando] = useState(false);
+
+  function manejarCambio(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  async function manejarSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setExito("");
+
+    if (!form.p_nom_usuario || !form.p_ape_usuario || !form.correo || !form.password) {
+      setError("Nombre, apellido, correo y contraseña son obligatorios.");
+      return;
+    }
+
+    if (form.password !== form.confirmarPassword) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setCargando(true);
+    try {
+      await apiFetch("/register", {
+        method: "POST",
+        body: JSON.stringify({
+          p_nom_usuario: form.p_nom_usuario,
+          p_ape_usuario: form.p_ape_usuario,
+          correo: form.correo,
+          telefono: form.telefono || undefined,
+          password: form.password,
+        }),
+      });
+
+      setExito("Cuenta creada con éxito. Ya puedes iniciar sesión.");
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err) {
+      setError(err.message || "No se pudo crear la cuenta.");
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  return (
+    <div className="container d-flex justify-content-center align-items-center login-container">
+      <div className="col-12 col-md-6 col-lg-4">
+        <div className="card login-card text-center">
+          <h5 className="mb-4">Crea tu cuenta en Creaciones Camar</h5>
+
+          {error && <div className="alert alert-danger">{error}</div>}
+          {exito && <div className="alert alert-success">{exito}</div>}
+
+          <form onSubmit={manejarSubmit}>
+            <div className="mb-3">
+              <input
+                type="text"
+                name="p_nom_usuario"
+                className="form-control"
+                placeholder="Nombre"
+                value={form.p_nom_usuario}
+                onChange={manejarCambio}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="text"
+                name="p_ape_usuario"
+                className="form-control"
+                placeholder="Apellido"
+                value={form.p_ape_usuario}
+                onChange={manejarCambio}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="email"
+                name="correo"
+                className="form-control"
+                placeholder="Correo"
+                value={form.correo}
+                onChange={manejarCambio}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="tel"
+                name="telefono"
+                className="form-control"
+                placeholder="Teléfono (opcional)"
+                value={form.telefono}
+                onChange={manejarCambio}
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="password"
+                name="password"
+                className="form-control"
+                placeholder="Contraseña"
+                value={form.password}
+                onChange={manejarCambio}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="password"
+                name="confirmarPassword"
+                className="form-control"
+                placeholder="Confirmar contraseña"
+                value={form.confirmarPassword}
+                onChange={manejarCambio}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn btn-main w-100 mb-3" disabled={cargando}>
+              {cargando ? "Creando cuenta..." : "Crear cuenta"}
+            </button>
+
+            <div className="mt-2 text-center">
+              <Link to="/" className="d-block text-muted small">
+                ¿Ya tienes cuenta? Inicia sesión
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -33,5 +33,5 @@ export const Logout = () => {
   localStorage.removeItem('usuario');
   localStorage.removeItem('token');
   localStorage.removeItem('usuarioId');
-  window.location.href = '/login';
+  window.location.href = '/';
 };

@@ -1,12 +1,18 @@
 package com.creaciones_camar.demo.model;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -45,6 +51,16 @@ public class Usuario {
 
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
+
+        @ManyToOne
+        @JoinColumn(name = "tipo_documento_id")
+        private TipoDocumento tipoDocumento;
+
+        @ManyToMany(fetch = FetchType.EAGER)
+        @JoinTable(name = "usuario_roles",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "rol_id"))
+        private Set<Rol> roles;
 
     @Transient
     private String idUsuario;

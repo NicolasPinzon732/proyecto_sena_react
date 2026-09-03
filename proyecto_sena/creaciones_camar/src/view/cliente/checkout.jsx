@@ -6,15 +6,34 @@ import { obtenerCarrito, vaciarCarrito } from "../../utils/cart";
 
 const COSTO_ENVIO = 12000;
 
-function formatearPrecio(precio) {
-  return new Intl.NumberFormat("es-CO").format(precio);
+const PAISES = {
+  Argentina: { moneda: "ARS", locale: "es-AR", tasaCop: 0.29, ciudades: ["Buenos Aires", "Córdoba", "Rosario"] },
+  Bolivia: { moneda: "BOB", locale: "es-BO", tasaCop: 0.0025, ciudades: ["La Paz", "Santa Cruz de la Sierra", "Cochabamba"] },
+  Brasil: { moneda: "BRL", locale: "pt-BR", tasaCop: 0.0013, ciudades: ["São Paulo", "Río de Janeiro", "Brasilia"] },
+  Chile: { moneda: "CLP", locale: "es-CL", tasaCop: 0.23, ciudades: ["Santiago", "Valparaíso", "Concepción"] },
+  Colombia: { moneda: "COP", locale: "es-CO", tasaCop: 1, ciudades: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Bucaramanga"] },
+  Ecuador: { moneda: "USD", locale: "es-EC", tasaCop: 0.00025, ciudades: ["Quito", "Guayaquil", "Cuenca"] },
+  Paraguay: { moneda: "PYG", locale: "es-PY", tasaCop: 1.85, ciudades: ["Asunción", "Ciudad del Este", "Encarnación"] },
+  Perú: { moneda: "PEN", locale: "es-PE", tasaCop: 0.00094, ciudades: ["Lima", "Arequipa", "Trujillo"] },
+  Uruguay: { moneda: "UYU", locale: "es-UY", tasaCop: 0.010, ciudades: ["Montevideo", "Salto", "Ciudad de la Costa"] },
+  México: { moneda: "MXN", locale: "es-MX", tasaCop: 0.0043, ciudades: ["Ciudad de México", "Guadalajara", "Monterrey"] },
+};
+
+function formatearPrecio(precio, pais) {
+  const configuracion = PAISES[pais];
+  const valor = precio * configuracion.tasaCop;
+  return new Intl.NumberFormat(configuracion.locale, {
+    style: "currency",
+    currency: configuracion.moneda,
+    maximumFractionDigits: configuracion.moneda === "COP" || configuracion.moneda === "CLP" || configuracion.moneda === "PYG" ? 0 : 2,
+  }).format(valor);
 }
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(() => obtenerCarrito());
+  const [items] = useState(() => obtenerCarrito());
   const [form, setForm] = useState({
-    nombre: "",
+    pais: "Colombia",
     direccion: "",
     ciudad: "",
     codigo_postal: "",
@@ -37,9 +56,14 @@ export default function Checkout() {
   );
 
   const total = subtotal + COSTO_ENVIO;
+  const configuracionPais = PAISES[form.pais];
 
   function actualizarCampo(valor, campo) {
-    setForm((prev) => ({ ...prev, [campo]: valor }));
+    setForm((prev) => ({
+      ...prev,
+      [campo]: valor,
+      ...(campo === "pais" ? { ciudad: "" } : {}),
+    }));
   }
 
   async function confirmarPedido(event) {
@@ -62,10 +86,11 @@ export default function Checkout() {
           usuario: { id: usuarioGuardado.id },
           total,
           estado: "pendiente",
-          pais: "Colombia",
+          pais: form.pais,
           ciudad: form.ciudad,
           direccion: form.direccion,
           codigoPostal: form.codigo_postal,
+          metodoPagoNombre: form.metodo_pago,
           detalles: items.map((item) => ({
             producto: { id: item.producto?.id },
             cantidad: Number(item.cantidad),
@@ -92,15 +117,34 @@ export default function Checkout() {
         <form onSubmit={confirmarPedido} className="resumen-card" style={{ padding: "24px" }}>
           {error && <div className="alert alert-danger">{error}</div>}
 
-          <div className="mb-3">
-            <label className="form-label fw-bold">Nombre completo</label>
-            <input
-              type="text"
-              className="form-control"
-              value={form.nombre}
-              onChange={(e) => actualizarCampo(e.target.value, "nombre")}
-              required
-            />
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-bold" htmlFor="pais">País</label>
+              <select
+                id="pais"
+                className="form-select"
+                value={form.pais}
+                onChange={(e) => actualizarCampo(e.target.value, "pais")}
+                required
+              >
+                {Object.entries(PAISES).map(([pais, datos]) => (
+                  <option key={pais} value={pais}>{pais} ({datos.moneda})</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label fw-bold" htmlFor="ciudad">Ciudad</label>
+              <select
+                id="ciudad"
+                className="form-select"
+                value={form.ciudad}
+                onChange={(e) => actualizarCampo(e.target.value, "ciudad")}
+                required
+              >
+                <option value="">Selecciona una ciudad</option>
+                {configuracionPais.ciudades.map((ciudad) => <option key={ciudad} value={ciudad}>{ciudad}</option>)}
+              </select>
+            </div>
           </div>
 
           <div className="mb-3">
@@ -116,16 +160,6 @@ export default function Checkout() {
           </div>
 
           <div className="row">
-            <div className="col-md-6 mb-3">
-              <label className="form-label fw-bold">Ciudad</label>
-              <input
-                type="text"
-                className="form-control"
-                value={form.ciudad}
-                onChange={(e) => actualizarCampo(e.target.value, "ciudad")}
-                required
-              />
-            </div>
             <div className="col-md-6 mb-3">
               <label className="form-label fw-bold">Código postal</label>
               <input
@@ -175,18 +209,24 @@ export default function Checkout() {
       </div>
 
       <aside className="resumen-card">
-        <p className="resumen-title">Resumen</p>
+        <p className="resumen-title">Información del pedido</p>
+        <div className="checkout-shipping-info">
+          <p>Información del envío</p>
+          <div><span>País</span><strong>{form.pais}</strong></div>
+          <div><span>Moneda</span><strong>{configuracionPais.moneda}</strong></div>
+          <div><span>Ciudad</span><strong>{form.ciudad || "Pendiente"}</strong></div>
+        </div>
         {items.map((item) => (
           <div key={item.key} className="resumen-row" style={{ marginBottom: "10px" }}>
             <span>
               {item.producto?.nombre} <small>x{item.cantidad}</small>
             </span>
-            <span>${formatearPrecio(Number(item.producto?.precio || 0) * Number(item.cantidad || 0))}</span>
+            <span>{formatearPrecio(Number(item.producto?.precio || 0) * Number(item.cantidad || 0), form.pais)}</span>
           </div>
         ))}
-        <div className="resumen-row"><span>Subtotal</span><span>${formatearPrecio(subtotal)}</span></div>
-        <div className="resumen-row"><span>Envío</span><span>${formatearPrecio(COSTO_ENVIO)}</span></div>
-        <div className="resumen-total"><span>Total</span><span className="resumen-total-val">${formatearPrecio(total)}</span></div>
+        <div className="resumen-row"><span>Subtotal</span><span>{formatearPrecio(subtotal, form.pais)}</span></div>
+        <div className="resumen-row"><span>Costo del envío</span><span>{formatearPrecio(COSTO_ENVIO, form.pais)}</span></div>
+        <div className="resumen-total"><span>Total</span><span className="resumen-total-val">{formatearPrecio(total, form.pais)}</span></div>
       </aside>
     </div>
   );

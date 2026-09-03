@@ -33,6 +33,18 @@ export default function Catalogo() {
 
   const categorias = [...new Set(productos.map((p) => p.categoria?.tipoCategoria || p.categoria).filter(Boolean))];
 
+  function obtenerStock(producto) {
+    if (typeof producto.tallas === "string") {
+      try {
+        const tallas = JSON.parse(producto.tallas);
+        if (Array.isArray(tallas)) return tallas.reduce((total, talla) => total + Number(talla.cantidad || 0), 0);
+      } catch {
+        // Usa stockTotal en productos antiguos.
+      }
+    }
+    return Number(producto.stockTotal ?? producto.stock_total ?? 0);
+  }
+
   const productosFiltrados = productos.filter((producto) => {
     const nombre = obtenerNombre(producto).toLowerCase();
     const categoriaProducto = producto.categoria?.tipoCategoria || producto.categoria || "";
@@ -103,8 +115,8 @@ export default function Catalogo() {
                         <p className="product-name">{obtenerNombre(producto)}</p>
                         <p className="product-desc">{producto.descripcion_corta}</p>
                       </div>
-                      <span className={`product-status ${producto.stock_total > 0 ? "disponible" : "agotado"}`}>
-                        {producto.stock_total > 0 ? "Disponible" : "Agotado"}
+                      <span className={`product-status ${obtenerStock(producto) > 0 ? "disponible" : "agotado"}`}>
+                        {obtenerStock(producto) > 0 ? "Disponible" : "Agotado"}
                       </span>
                     </div>
                     <div className="product-bottom">

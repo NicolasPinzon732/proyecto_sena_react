@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import HomeNavbar from '../shared/HomeNavbar';
 
 export default function PedidosEmpleado() {
   const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filtroEstado, setFiltroEstado] = useState('pendiente');
+  const [filtroEstado, setFiltroEstado] = useState('');
 
   useEffect(() => {
     const fetchPedidos = async () => {
@@ -17,8 +17,6 @@ export default function PedidosEmpleado() {
         setPedidos(data);
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -36,20 +34,19 @@ export default function PedidosEmpleado() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
-
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <HomeNavbar role="empleado" />
+      <div className="dashboard-shell admin-list-shell empleado-pedidos-shell">
+      <div className="dashboard-header admin-list-header empleado-pedidos-header">
         <div>
-          <h4 className="mb-0">Gestión de Pedidos</h4>
+          <p className="dashboard-kicker">Panel operativo · Empleado</p>
+          <h1>Gestión de pedidos</h1>
           <p className="text-muted small mb-0">Confirma y registra el estado de los pedidos</p>
         </div>
       </div>
 
-      <div className="card card-custom p-3 mb-4">
+      <div className="card card-custom admin-filter-card empleado-filter-card p-3 mb-4">
         <div className="row g-2 align-items-center">
           <div className="col-12 col-md-6">
             <select
@@ -57,6 +54,7 @@ export default function PedidosEmpleado() {
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
             >
+              <option value="">Todos los pedidos</option>
               <option value="pendiente">Pedidos Pendientes</option>
               <option value="confirmado">Pedidos Confirmados</option>
               <option value="enviado">Pedidos Enviados</option>
@@ -66,50 +64,46 @@ export default function PedidosEmpleado() {
         </div>
       </div>
 
-      <div className="row g-3">
+      <div className="row g-4 empleado-pedidos-grid">
         {pedidos.map((pedido) => (
           <div key={pedido.id} className="col-12 col-md-6">
-            <div className="card">
-              <div className="card-header">
-                <strong>Pedido #{pedido.id}</strong>
-                <span className="float-end text-muted small">
+            <div className="card empleado-pedido-card">
+              <div className="empleado-pedido-card__header">
+                <div>
+                  <p className="empleado-pedido-card__eyebrow">Pedido</p>
+                  <strong>#{pedido.id}</strong>
+                </div>
+                <span className="empleado-pedido-card__date">
                   {new Date(pedido.fechaPedido).toLocaleDateString('es-ES')}
                 </span>
               </div>
-              <div className="card-body">
-                <p className="mb-2">
-                  <strong>Cliente:</strong> {pedido.usuario?.nombres} {pedido.usuario?.apellidos}
-                </p>
-                <p className="mb-2">
-                  <strong>Email:</strong> {pedido.usuario?.email}
-                </p>
-                <p className="mb-2">
-                  <strong>Teléfono:</strong> {pedido.usuario?.telefono}
-                </p>
-                <p className="mb-2">
-                  <strong>Dirección:</strong> {pedido.direccion}, {pedido.ciudad}, {pedido.pais}
-                </p>
-                <p className="mb-3">
-                  <strong>Total:</strong> ${pedido.total?.toLocaleString()}
-                </p>
+              <div className="card-body empleado-pedido-card__body">
+                <div className="empleado-pedido-status">{pedido.estado}</div>
+                <div className="empleado-pedido-data">
+                  <p><span>Cliente</span><strong>{pedido.usuario?.nombres} {pedido.usuario?.apellidos}</strong></p>
+                  <p><span>Email</span><strong>{pedido.usuario?.email || 'No registrado'}</strong></p>
+                  <p><span>Teléfono</span><strong>{pedido.usuario?.telefono || 'No registrado'}</strong></p>
+                  <p><span>Entrega</span><strong>{pedido.direccion}, {pedido.ciudad}, {pedido.pais}</strong></p>
+                  <p><span>Total</span><strong className="empleado-pedido-total">${Number(pedido.total || 0).toLocaleString('es-CO')}</strong></p>
+                </div>
 
-                <div>
-                  <label className="form-label small">Cambiar estado:</label>
-                  <div className="d-flex gap-2 flex-wrap">
+                <div className="empleado-pedido-actions">
+                  <span>Actualizar estado</span>
+                  <div>
                     <button
-                      className={`btn btn-sm ${pedido.estado === 'confirmado' ? 'btn-primary' : 'btn-outline-primary'}`}
+                      className={`empleado-status-button ${pedido.estado === 'confirmado' ? 'active confirmed' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'confirmado')}
                     >
                       Confirmar
                     </button>
                     <button
-                      className={`btn btn-sm ${pedido.estado === 'enviado' ? 'btn-info' : 'btn-outline-info'}`}
+                      className={`empleado-status-button ${pedido.estado === 'enviado' ? 'active shipped' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'enviado')}
                     >
                       Enviar
                     </button>
                     <button
-                      className={`btn btn-sm ${pedido.estado === 'entregado' ? 'btn-success' : 'btn-outline-success'}`}
+                      className={`empleado-status-button ${pedido.estado === 'entregado' ? 'active delivered' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'entregado')}
                     >
                       Entregado
@@ -123,11 +117,12 @@ export default function PedidosEmpleado() {
       </div>
 
       {pedidos.length === 0 && (
-        <div className="text-center text-muted py-5">
+        <div className="admin-empty-state text-center text-muted py-5">
           <i className="bi bi-bag fs-2 d-block mb-2"></i>
           <p>No hay pedidos en este estado.</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

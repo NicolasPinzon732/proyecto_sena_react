@@ -1,10 +1,10 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function HomeNavbar({ role = 'admin' }) {
   const location = useLocation();
-  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [confirmarSalida, setConfirmarSalida] = useState(false);
 
   const links =
     role === 'admin'
@@ -19,10 +19,12 @@ export default function HomeNavbar({ role = 'admin' }) {
           { to: '/empleado/pedidos', label: 'Pedidos' },
         ];
 
-  function cerrarSesion() {
+  function confirmarCerrarSesion() {
     localStorage.removeItem('user');
+    localStorage.removeItem('usuario');
     localStorage.removeItem('token');
-    navigate('/login');
+    localStorage.removeItem('usuarioId');
+    window.location.replace('/');
   }
 
   return (
@@ -53,11 +55,26 @@ export default function HomeNavbar({ role = 'admin' }) {
             <span>{user?.nombres || 'Usuario'}</span>
             <small>{role === 'admin' ? 'Admin' : 'Empleado'}</small>
           </div>
-          <button type="button" className="home-user__logout" onClick={cerrarSesion}>
+          <button type="button" className="home-user__logout" onClick={() => setConfirmarSalida(true)}>
+            <i className="bi bi-box-arrow-right me-2"></i>
             Salir
           </button>
         </div>
       </div>
+
+      {confirmarSalida && (
+        <div className="admin-logout-overlay" role="presentation">
+          <div className="admin-logout-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-logout-title">
+            <div className="admin-logout-dialog__icon"><i className="bi bi-box-arrow-right"></i></div>
+            <h2 id="admin-logout-title">¿Deseas cerrar sesión?</h2>
+            <p>Volverás a la interfaz principal y tendrás que iniciar sesión para entrar de nuevo.</p>
+            <div className="admin-logout-dialog__actions">
+              <button type="button" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
+              <button type="button" className="confirm" onClick={confirmarCerrarSesion}>Sí, salir</button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

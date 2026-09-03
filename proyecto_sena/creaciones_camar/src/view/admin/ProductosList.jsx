@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import HomeNavbar from '../shared/HomeNavbar';
 
 export default function ProductosList() {
   const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
@@ -17,8 +17,6 @@ export default function ProductosList() {
         setProductos(data);
       } catch (error) {
         console.error('Error al cargar productos:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -37,23 +35,22 @@ export default function ProductosList() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
-
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <HomeNavbar role="admin" />
+      <div className="dashboard-shell admin-list-shell">
+      <div className="dashboard-header admin-list-header">
         <div>
-          <h4 className="mb-0">Productos</h4>
+          <p className="dashboard-kicker">Panel administrativo</p>
+          <h1>Productos</h1>
           <p className="text-muted small mb-0">Gestiona el catálogo de productos</p>
         </div>
-        <a href="/admin/productos/crear" className="btn btn-primary">
+        <a href="/admin/productos/crear" className="admin-primary-button">
           <i className="bi bi-plus-circle me-1"></i> Nuevo producto
         </a>
       </div>
 
-      <div className="card card-custom p-3 mb-4">
+      <div className="card card-custom admin-filter-card p-3 mb-4">
         <div className="input-group">
           <span className="input-group-text"><i className="bi bi-search"></i></span>
           <input
@@ -66,10 +63,10 @@ export default function ProductosList() {
         </div>
       </div>
 
-      <div className="row g-3">
+      <div className="row g-4 admin-product-grid">
         {productos.map((producto) => (
           <div key={producto.id} className="col-12 col-md-6">
-            <div className="card card-custom p-3">
+            <div className="card card-custom admin-product-card p-3">
               <div className="d-flex justify-content-between align-items-start mb-2">
                 <div>
                   <h6 className="mb-0 fw-bold">{producto.nombre}</h6>
@@ -109,6 +106,7 @@ export default function ProductosList() {
           <p>No hay productos registrados aún.</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

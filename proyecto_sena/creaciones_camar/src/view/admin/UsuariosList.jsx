@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import HomeNavbar from '../shared/HomeNavbar';
 
 export default function UsuariosList() {
   const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filtroRol, setFiltroRol] = useState('');
 
   useEffect(() => {
@@ -17,8 +17,6 @@ export default function UsuariosList() {
         setUsuarios(data);
       } catch (error) {
         console.error('Error al cargar usuarios:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -36,23 +34,22 @@ export default function UsuariosList() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
-
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <HomeNavbar role="admin" />
+      <div className="dashboard-shell admin-list-shell">
+      <div className="dashboard-header admin-list-header">
         <div>
-          <h4 className="mb-0">Usuarios</h4>
+          <p className="dashboard-kicker">Panel administrativo</p>
+          <h1>Usuarios</h1>
           <p className="text-muted small mb-0">Gestiona todos los usuarios del sistema</p>
         </div>
-        <a href="/admin/usuarios/crear" className="btn btn-primary">
+        <a href="/admin/usuarios/crear" className="admin-primary-button">
           <i className="bi bi-plus-circle me-1"></i> Nuevo usuario
         </a>
       </div>
 
-      <div className="card card-custom p-3 mb-4">
+      <div className="card card-custom admin-filter-card p-3 mb-4">
         <div className="row g-2 align-items-center">
           <div className="col-12 col-md">
             <select
@@ -69,7 +66,7 @@ export default function UsuariosList() {
         </div>
       </div>
 
-      <div className="card card-custom p-3">
+      <div className="card card-custom admin-table-card p-3">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
             <thead className="table-light">
@@ -123,6 +120,7 @@ export default function UsuariosList() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

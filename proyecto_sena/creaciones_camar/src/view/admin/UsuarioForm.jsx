@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
+import HomeNavbar from '../shared/HomeNavbar';
 
 export default function UsuarioForm() {
   const { id } = useParams();
@@ -82,18 +83,28 @@ export default function UsuarioForm() {
   }
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <HomeNavbar role="admin" />
+      <div className="dashboard-shell admin-form-shell">
+      <div className="dashboard-header admin-list-header admin-form-header">
         <div>
-          <h4 className="mb-0">{id ? 'Editar' : 'Nuevo'} usuario</h4>
+          <p className="dashboard-kicker">Panel administrativo · Usuarios</p>
+          <h1>{id ? 'Editar usuario' : 'Nuevo usuario'}</h1>
           <p className="text-muted small mb-0">Completa la información del usuario</p>
         </div>
-        <a href="/admin/usuarios" className="btn btn-outline-secondary">
+        <a href="/admin/usuarios" className="admin-secondary-button">
           <i className="bi bi-arrow-left me-1"></i> Volver
         </a>
       </div>
 
-      <div className="card card-custom p-4">
+      <div className="card card-custom admin-form-card">
+        <div className="admin-form-card__intro">
+          <div className="admin-form-card__icon"><i className="bi bi-person-vcard-fill"></i></div>
+          <div>
+            <h2>Datos de la cuenta</h2>
+            <p>Revisa y actualiza la información del usuario.</p>
+          </div>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
             <div className="col-12 col-md-6">
@@ -203,16 +214,17 @@ export default function UsuarioForm() {
             )}
           </div>
 
-          <div className="d-flex justify-content-center gap-3 mt-4">
-            <a href="/admin/usuarios" className="btn btn-outline-secondary px-4">
+          <div className="admin-form-actions">
+            <a href="/admin/usuarios" className="admin-secondary-button">
               Cancelar
             </a>
-            <button type="submit" className="btn btn-primary px-4">
+            <button type="submit" className="admin-primary-button">
               Guardar
             </button>
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

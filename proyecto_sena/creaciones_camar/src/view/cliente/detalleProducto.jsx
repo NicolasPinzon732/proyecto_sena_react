@@ -46,7 +46,19 @@ export default function DetalleProducto() {
   const tallasDisponibles = Array.isArray(producto.tallas)
     ? producto.tallas
     : typeof producto.tallas === 'string'
-      ? producto.tallas.split(',').map((t) => ({ talla: t.trim(), cantidad: producto.stockTotal || 1 })).filter((t) => t.talla)
+      ? (() => {
+          try {
+            const tallas = JSON.parse(producto.tallas);
+            if (Array.isArray(tallas)) return tallas;
+          } catch {
+            const nombres = producto.tallas.split(',').map((t) => t.trim()).filter(Boolean);
+            const stock = Number(producto.stockTotal || 0);
+            const base = nombres.length ? Math.floor(stock / nombres.length) : 0;
+            const sobrante = nombres.length ? stock % nombres.length : 0;
+            return nombres.map((talla, index) => ({ talla, cantidad: base + (index < sobrante ? 1 : 0) }));
+          }
+          return [];
+        })()
       : [];
 
   const stockActual = tallasDisponibles.find((item) => item.talla === tallaSeleccionada)?.cantidad || producto.stockTotal || 0;

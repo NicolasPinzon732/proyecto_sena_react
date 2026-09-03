@@ -9,7 +9,6 @@ export default function AdminDashboard() {
     totalPedidos: 0,
     pedidosPendientes: 0,
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -30,34 +29,30 @@ export default function AdminDashboard() {
         });
       } catch (error) {
         console.error('Error al cargar estadísticas:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchStats();
   }, []);
 
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
-
   return (
     <>
       <HomeNavbar role="admin" />
-      <div className="dashboard-shell">
-        <div className="dashboard-header">
+      <div className="dashboard-shell admin-dashboard-shell">
+        <div className="dashboard-header dashboard-hero">
           <div>
-            <p className="dashboard-kicker">Panel administrativo</p>
+            <p className="dashboard-kicker">Creaciones Camar · Administración</p>
             <h1>Dashboard</h1>
+            <p className="dashboard-hero-copy">Todo lo importante de tu tienda, en un solo lugar.</p>
           </div>
-          <span className="dashboard-badge">Bienvenido</span>
+          <div className="dashboard-hero-mark" aria-hidden="true"><i className="bi bi-bar-chart-line-fill"></i></div>
         </div>
 
       <div className="dashboard-stats row g-4">
         <div className="col-md-6 col-lg-3">
           <div className="dashboard-card stat-card stat-usuarios h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-people-fill"></i></div>
               <h6>Usuarios</h6>
               <h2>{stats.totalUsuarios}</h2>
             </div>
@@ -67,6 +62,7 @@ export default function AdminDashboard() {
         <div className="col-md-6 col-lg-3">
           <div className="dashboard-card stat-card stat-productos h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-box-seam-fill"></i></div>
               <h6>Productos</h6>
               <h2>{stats.totalProductos}</h2>
             </div>
@@ -76,6 +72,7 @@ export default function AdminDashboard() {
         <div className="col-md-6 col-lg-3">
           <div className="dashboard-card stat-card stat-pedidos h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-bag-check-fill"></i></div>
               <h6>Pedidos Totales</h6>
               <h2>{stats.totalPedidos}</h2>
             </div>
@@ -85,6 +82,7 @@ export default function AdminDashboard() {
         <div className="col-md-6 col-lg-3">
           <div className="dashboard-card stat-card stat-pendientes h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-clock-history"></i></div>
               <h6>Pedidos Pendientes</h6>
               <h2>{stats.pedidosPendientes}</h2>
             </div>
@@ -92,40 +90,25 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="row mt-5 g-4">
-        <div className="col-lg-6">
-          <div className="dashboard-card panel-card">
+      <div className="row mt-5 g-4 dashboard-actions-row">
+        <div className="col-12">
+          <div className="dashboard-card panel-card dashboard-actions-card">
             <div className="panel-header">
-              <h6>Acciones rápidas</h6>
-            </div>
-            <div className="card-body">
-              <div className="d-flex flex-column gap-2">
-                <a href="/admin/usuarios" className="btn btn-main text-start">
-                  <i className="bi bi-people me-2"></i> Gestionar usuarios
-                </a>
-                <a href="/admin/productos" className="btn btn-main text-start">
-                  <i className="bi bi-box me-2"></i> Gestionar productos
-                </a>
-                <a href="/admin/pedidos" className="btn btn-main text-start">
-                  <i className="bi bi-bag me-2"></i> Ver pedidos
-                </a>
+              <div>
+                <p className="dashboard-kicker">Gestiona tu operación</p>
+                <h6>Acciones rápidas</h6>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="col-lg-6">
-          <div className="dashboard-card panel-card">
-            <div className="panel-header">
-              <h6>Información</h6>
-            </div>
-            <div className="card-body">
-              <p className="info-title">
-                <strong>Sistema de Gestión Creaciones Camar</strong>
-              </p>
-              <p className="info-copy mb-0">
-                Panel administrativo para la gestión de productos, usuarios y pedidos.
-              </p>
+            <div className="card-body dashboard-action-grid">
+                <a href="/admin/usuarios" className="dashboard-action-link">
+                  <i className="bi bi-people-fill"></i><span>Gestionar usuarios</span><i className="bi bi-arrow-up-right"></i>
+                </a>
+                <a href="/admin/productos" className="dashboard-action-link">
+                  <i className="bi bi-box-seam-fill"></i><span>Gestionar productos</span><i className="bi bi-arrow-up-right"></i>
+                </a>
+                <a href="/admin/pedidos" className="dashboard-action-link">
+                  <i className="bi bi-bag-check-fill"></i><span>Ver pedidos</span><i className="bi bi-arrow-up-right"></i>
+                </a>
             </div>
           </div>
         </div>

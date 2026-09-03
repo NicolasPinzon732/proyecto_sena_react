@@ -12,9 +12,14 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
+    @Autowired
+    private StockTallaService stockTallaService;
+
     // CREATE
     public Producto crearProducto(Producto producto) {
-        return productoRepository.save(producto);
+        Producto guardado = productoRepository.save(producto);
+        stockTallaService.sincronizar(guardado);
+        return guardado;
     }
 
     // READ
@@ -50,7 +55,9 @@ public class ProductoService {
             if (productoActualizado.getImagen() != null) producto.setImagen(productoActualizado.getImagen());
             if (productoActualizado.getCategoria() != null) producto.setCategoria(productoActualizado.getCategoria());
             if (productoActualizado.getTallas() != null) producto.setTallas(productoActualizado.getTallas());
-            return productoRepository.save(producto);
+            Producto guardado = productoRepository.save(producto);
+            stockTallaService.sincronizar(guardado);
+            return guardado;
         }
         return null;
     }

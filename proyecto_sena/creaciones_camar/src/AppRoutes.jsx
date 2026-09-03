@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
@@ -27,6 +27,7 @@ import Pedidos from './view/cliente/pedidos';
 // Empleado
 import EmpleadoDashboard from './view/empleado/EmpleadoDashboard';
 import PedidosEmpleado from './view/empleado/PedidosEmpleado';
+import Home from './view/Home';
 
 function AppRoutes() {
   return (
@@ -63,7 +64,7 @@ function AppRoutes() {
         <Route path="/empleado" element={<ProtectedRoute requiredRol="empleado"><EmpleadoDashboard /></ProtectedRoute>} />
         <Route path="/empleado/pedidos" element={<ProtectedRoute requiredRol="empleado"><PedidosEmpleado /></ProtectedRoute>} />
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Home />} />
       </Routes>
     </BrowserRouter>
   );

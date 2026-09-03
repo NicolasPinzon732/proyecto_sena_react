@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useNavigate } from 'react-router-dom';
+import HomeNavbar from '../shared/HomeNavbar';
 
 export default function PedidosList() {
+  const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('');
+
+  const formatearTotal = (total) => `$${Number(total || 0).toLocaleString('es-CO')}`;
+  const formatearFecha = (fecha) => fecha
+    ? new Date(fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+    : 'Sin fecha';
 
   useEffect(() => {
     const fetchPedidos = async () => {
@@ -17,8 +24,6 @@ export default function PedidosList() {
         setPedidos(data);
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -36,20 +41,22 @@ export default function PedidosList() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
-
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h4 className="mb-0">Pedidos</h4>
-          <p className="text-muted small mb-0">Gestiona todos los pedidos de clientes</p>
+    <>
+      <HomeNavbar role="admin" />
+      <div className="dashboard-shell admin-list-shell pedidos-admin-shell">
+        <div className="dashboard-header pedidos-admin-header">
+          <div>
+            <p className="dashboard-kicker">Panel administrativo</p>
+            <h1>Pedidos</h1>
+            <p className="text-muted small mb-0">Gestiona todos los pedidos de clientes</p>
+          </div>
+          <button type="button" className="pedidos-admin-exit" onClick={() => navigate('/admin')}>
+            <i className="bi bi-arrow-left me-2"></i>Salir
+          </button>
         </div>
-      </div>
 
-      <div className="card card-custom p-3 mb-4">
+      <div className="card card-custom p-3 mb-4 pedidos-admin-filter">
         <div className="row g-2 align-items-center">
           <div className="col-12 col-md">
             <select
@@ -68,25 +75,29 @@ export default function PedidosList() {
         </div>
       </div>
 
-      <div className="card card-custom p-3">
+      <div className="card card-custom p-3 pedidos-admin-table-card">
         <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
             <thead className="table-light">
               <tr>
                 <th>ID Pedido</th>
                 <th>Cliente</th>
+                <th>Fecha del pedido</th>
                 <th>Total</th>
                 <th>Estado</th>
-                <th>Fecha</th>
-                <th>Acciones</th>
+                <th>País</th>
+                <th>Ciudad</th>
+                <th>Dirección</th>
+                <th>Código postal</th>
               </tr>
             </thead>
             <tbody>
               {pedidos.map((pedido) => (
                 <tr key={pedido.id}>
                   <td><strong>#{pedido.id}</strong></td>
-                  <td>{pedido.usuario?.nombres} {pedido.usuario?.apellidos}</td>
-                  <td>${pedido.total?.toLocaleString()}</td>
+                  <td>{`${pedido.usuario?.nombres || ''} ${pedido.usuario?.apellidos || ''}`.trim() || 'Sin cliente'}</td>
+                  <td><small>{formatearFecha(pedido.fechaPedido)}</small></td>
+                  <td>{formatearTotal(pedido.total)}</td>
                   <td>
                     <select
                       className="form-select form-select-sm"
@@ -100,14 +111,10 @@ export default function PedidosList() {
                       <option value="cancelado">Cancelado</option>
                     </select>
                   </td>
-                  <td>
-                    <small>{new Date(pedido.fechaPedido).toLocaleDateString('es-ES')}</small>
-                  </td>
-                  <td>
-                    <a href={`/admin/pedidos/${pedido.id}`} className="btn btn-sm btn-outline-info">
-                      <i className="bi bi-eye"></i>
-                    </a>
-                  </td>
+                  <td>{pedido.pais || 'No especificado'}</td>
+                  <td>{pedido.ciudad || 'No especificada'}</td>
+                  <td className="pedido-direccion">{pedido.direccion || 'No especificada'}</td>
+                  <td>{pedido.codigoPostal || 'No especificado'}</td>
                 </tr>
               ))}
             </tbody>
@@ -120,6 +127,7 @@ export default function PedidosList() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

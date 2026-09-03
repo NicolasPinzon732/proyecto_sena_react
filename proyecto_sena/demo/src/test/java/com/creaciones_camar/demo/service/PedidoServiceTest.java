@@ -21,6 +21,7 @@ import com.creaciones_camar.demo.model.Pedido;
 import com.creaciones_camar.demo.model.Producto;
 import com.creaciones_camar.demo.model.Usuario;
 import com.creaciones_camar.demo.repository.PedidoRepository;
+import com.creaciones_camar.demo.repository.ProductoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +29,12 @@ class PedidoServiceTest {
 
     @Mock
     private PedidoRepository pedidoRepository;
+
+    @Mock
+    private ProductoRepository productoRepository;
+
+    @Mock
+    private StockTallaService stockTallaService;
 
     @InjectMocks
     private PedidoService pedidoService;
@@ -54,6 +61,10 @@ class PedidoServiceTest {
         pedido.setDetalles(List.of(detalle));
 
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        producto.setNombre("Chaqueta");
+        producto.setStockTotal(8);
+        producto.setTallas("[{\"talla\":\"M\",\"cantidad\":8}]");
+        when(productoRepository.findById(5L)).thenReturn(java.util.Optional.of(producto));
 
         Pedido guardado = pedidoService.crearPedido(pedido);
 

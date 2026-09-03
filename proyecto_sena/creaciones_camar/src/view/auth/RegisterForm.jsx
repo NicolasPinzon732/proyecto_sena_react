@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link, useNavigate } from 'react-router-dom';
+import { validarCampoRegistro } from '../../utils/validacionesRegistro';
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -12,15 +13,21 @@ export default function RegisterForm() {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const nextFormData = { ...formData, [name]: value };
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: validarCampoRegistro(name, value, nextFormData),
     }));
   };
 
@@ -36,8 +43,35 @@ export default function RegisterForm() {
       return;
     }
 
-    const nombres = formData.nombres.trim().split(/\s+/);
-    const apellidos = formData.apellidos.trim().split(/\s+/);
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/.test(formData.nombres.trim())) {
+      setError('Los nombres solo pueden contener letras');
+      setLoading(false);
+      return;
+    }
+
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/.test(formData.apellidos.trim())) {
+      setError('Los apellidos solo pueden contener letras');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      setError('El correo debe contener el símbolo @');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.telefono && !/^\d+$/.test(formData.telefono)) {
+      setError('El teléfono solo puede contener números');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener mínimo 8 caracteres');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('http://localhost:8080/api/usuarios/register', {
@@ -98,8 +132,11 @@ export default function RegisterForm() {
                   className="form-control"
                   value={formData.nombres}
                   onChange={handleChange}
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
+                  title="Solo se permiten letras"
                   required
                 />
+                {fieldErrors.nombres && <small className="register-field-error">{fieldErrors.nombres}</small>}
               </div>
               <div className="col-6">
                 <label className="form-label">Apellidos</label>
@@ -109,8 +146,11 @@ export default function RegisterForm() {
                   className="form-control"
                   value={formData.apellidos}
                   onChange={handleChange}
+                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
+                  title="Solo se permiten letras"
                   required
                 />
+                {fieldErrors.apellidos && <small className="register-field-error">{fieldErrors.apellidos}</small>}
               </div>
             </div>
 
@@ -122,8 +162,11 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.email}
                 onChange={handleChange}
+                pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                title="Ingresa un correo válido con @"
                 required
               />
+              {fieldErrors.email && <small className="register-field-error">{fieldErrors.email}</small>}
             </div>
 
             <div className="mb-3 text-start">
@@ -134,7 +177,10 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.telefono}
                 onChange={handleChange}
+                pattern="[0-9]+"
+                title="Solo se permiten números"
               />
+              {fieldErrors.telefono && <small className="register-field-error">{fieldErrors.telefono}</small>}
             </div>
 
             <div className="mb-3 text-start">
@@ -145,8 +191,10 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.password}
                 onChange={handleChange}
+                minLength="8"
                 required
               />
+              {fieldErrors.password && <small className="register-field-error">{fieldErrors.password}</small>}
             </div>
 
             <div className="mb-4 text-start">
@@ -157,8 +205,10 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                minLength="8"
                 required
               />
+              {fieldErrors.confirmPassword && <small className="register-field-error">{fieldErrors.confirmPassword}</small>}
             </div>
 
             <button type="submit" className="btn btn-main w-100 mb-3" disabled={loading}>

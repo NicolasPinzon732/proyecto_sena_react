@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
+import HomeNavbar from '../shared/HomeNavbar';
+
+function obtenerTallas(valor, stockTotal) {
+  try {
+    const tallas = JSON.parse(valor || '[]');
+    if (Array.isArray(tallas) && tallas.length) return tallas;
+  } catch {
+    // Convierte el formato antiguo de tallas separadas por comas.
+  }
+
+  const nombres = String(valor || '').split(',').map((talla) => talla.trim()).filter(Boolean);
+  const stock = Number(stockTotal || 0);
+  const base = nombres.length ? Math.floor(stock / nombres.length) : 0;
+  const sobrante = nombres.length ? stock % nombres.length : 0;
+  return nombres.map((talla, index) => ({ talla, cantidad: base + (index < sobrante ? 1 : 0) }));
+}
 
 export default function ProductoForm() {
   const { id } = useParams();
@@ -55,6 +71,31 @@ export default function ProductoForm() {
     }));
   };
 
+  const actualizarTalla = (indice, campo, valor) => {
+    const tallas = obtenerTallas(formData.tallas, formData.stockTotal).map((talla, index) => (
+      index === indice ? { ...talla, [campo]: campo === 'cantidad' ? Math.max(0, Number(valor || 0)) : valor } : talla
+    ));
+    setFormData((prev) => ({
+      ...prev,
+      tallas: JSON.stringify(tallas),
+      stockTotal: tallas.reduce((total, talla) => total + Number(talla.cantidad || 0), 0),
+    }));
+  };
+
+  const agregarTalla = () => {
+    const tallas = [...obtenerTallas(formData.tallas, formData.stockTotal), { talla: '', cantidad: 0 }];
+    setFormData((prev) => ({ ...prev, tallas: JSON.stringify(tallas) }));
+  };
+
+  const eliminarTalla = (indice) => {
+    const tallas = obtenerTallas(formData.tallas, formData.stockTotal).filter((_, index) => index !== indice);
+    setFormData((prev) => ({
+      ...prev,
+      tallas: JSON.stringify(tallas),
+      stockTotal: tallas.reduce((total, talla) => total + Number(talla.cantidad || 0), 0),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -82,18 +123,28 @@ export default function ProductoForm() {
   }
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <HomeNavbar role="admin" />
+      <div className="dashboard-shell admin-form-shell">
+      <div className="dashboard-header admin-list-header admin-form-header">
         <div>
-          <h4 className="mb-0">{id ? 'Editar' : 'Crear'} producto</h4>
+          <p className="dashboard-kicker">Panel administrativo · Productos</p>
+          <h1>{id ? 'Editar producto' : 'Crear producto'}</h1>
           <p className="text-muted small mb-0">Completa la información del producto</p>
         </div>
-        <a href="/admin/productos" className="btn btn-outline-secondary">
+        <a href="/admin/productos" className="admin-secondary-button">
           <i className="bi bi-arrow-left me-1"></i> Volver
         </a>
       </div>
 
-      <div className="card card-custom p-4">
+      <div className="card card-custom admin-form-card">
+        <div className="admin-form-card__intro">
+          <div className="admin-form-card__icon"><i className="bi bi-box-seam-fill"></i></div>
+          <div>
+            <h2>Datos del producto</h2>
+            <p>Administra la información que aparecerá en el catálogo.</p>
+          </div>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="row g-3">
             <div className="col-12 col-md-6">
@@ -142,13 +193,13 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label">Stock Total</label>
+              <label className="form-label">Stock total calculado</label>
               <input
                 type="number"
                 name="stockTotal"
                 className="form-control"
                 value={formData.stockTotal}
-                onChange={handleChange}
+                readOnly
                 required
               />
             </div>
@@ -175,16 +226,24 @@ export default function ProductoForm() {
               ></textarea>
             </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">Tallas (separadas por comas)</label>
-              <input
-                type="text"
-                name="tallas"
-                className="form-control"
-                value={formData.tallas}
-                onChange={handleChange}
-                placeholder="XS, S, M, L, XL"
-              />
+            <div className="col-12">
+              <div className="admin-size-heading">
+                <label className="form-label mb-0">Stock por talla</label>
+                <button type="button" className="admin-size-add" onClick={agregarTalla}>
+                  <i className="bi bi-plus-circle me-1"></i>Agregar talla
+                </button>
+              </div>
+              <div className="admin-size-grid">
+                {obtenerTallas(formData.tallas, formData.stockTotal).map((talla, index) => (
+                  <div className="admin-size-row" key={`${talla.talla}-${index}`}>
+                    <input type="text" className="form-control" value={talla.talla} onChange={(e) => actualizarTalla(index, 'talla', e.target.value)} placeholder="Talla" required />
+                    <input type="number" className="form-control" value={talla.cantidad} onChange={(e) => actualizarTalla(index, 'cantidad', e.target.value)} min="0" placeholder="Unidades" required />
+                    <button type="button" className="admin-size-remove" onClick={() => eliminarTalla(index)} aria-label={`Eliminar talla ${talla.talla || index + 1}`}><i className="bi bi-trash"></i></button>
+                  </div>
+                ))}
+              </div>
+              {!obtenerTallas(formData.tallas, formData.stockTotal).length && <p className="admin-form-empty">Agrega al menos una talla para definir su stock.</p>}
+              <small className="admin-form-help">Cada talla tiene su propio inventario.</small>
             </div>
 
             <div className="col-12 col-md-6">
@@ -199,16 +258,17 @@ export default function ProductoForm() {
             </div>
           </div>
 
-          <div className="d-flex justify-content-center gap-3 mt-4">
-            <a href="/admin/productos" className="btn btn-outline-secondary px-4">
+          <div className="admin-form-actions">
+            <a href="/admin/productos" className="admin-secondary-button">
               Cancelar
             </a>
-            <button type="submit" className="btn btn-primary px-4">
+            <button type="submit" className="admin-primary-button">
               Guardar
             </button>
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

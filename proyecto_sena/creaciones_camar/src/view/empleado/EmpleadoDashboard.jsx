@@ -7,7 +7,6 @@ export default function EmpleadoDashboard() {
     pedidosPendientes: 0,
     pedidosEnvio: 0,
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -24,17 +23,11 @@ export default function EmpleadoDashboard() {
         });
       } catch (error) {
         console.error('Error al cargar estadísticas:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchStats();
   }, []);
-
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
 
   return (
     <>

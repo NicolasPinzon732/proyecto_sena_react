@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../../utils/api";
 import { obtenerCantidadCarrito } from "../../utils/cart";
+import { validarCampoRegistro } from "../../utils/validacionesRegistro";
 
 export default function AppCliente() {
   const location = useLocation();
@@ -22,6 +23,9 @@ export default function AppCliente() {
     email: "",
   });
   const [passwordNueva, setPasswordNueva] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [erroresPerfil, setErroresPerfil] = useState({});
+  const [confirmarSalida, setConfirmarSalida] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [cartCount, setCartCount] = useState(obtenerCantidadCarrito());
 
@@ -62,10 +66,36 @@ export default function AppCliente() {
 
   function manejarCambio(campo, valor) {
     setUsuario((prev) => ({ ...prev, [campo]: valor }));
+    setErroresPerfil((prev) => ({
+      ...prev,
+      [campo]: validarCampoRegistro(campo, valor),
+    }));
+  }
+
+  function manejarPasswordNueva(valor) {
+    setPasswordNueva(valor);
+    setErroresPerfil((prev) => ({
+      ...prev,
+      password: valor && valor.length < 8 ? "La contraseña debe tener mínimo 8 caracteres." : "",
+      confirmarPassword: confirmarPassword && valor !== confirmarPassword ? "Las contraseñas no coinciden." : "",
+    }));
   }
 
   async function guardarCambios(e) {
     e.preventDefault();
+    const errores = {};
+    ["nombres", "apellidos", "email", "telefono"].forEach((campo) => {
+      const error = validarCampoRegistro(campo, usuario[campo] || "");
+      if (error) errores[campo] = error;
+    });
+
+    if (!usuario.direccion.trim()) errores.direccion = "La dirección es obligatoria.";
+    if (passwordNueva && passwordNueva.length < 8) errores.password = "La contraseña debe tener mínimo 8 caracteres.";
+    if (passwordNueva && passwordNueva !== confirmarPassword) errores.confirmarPassword = "Las contraseñas no coinciden.";
+
+    setErroresPerfil(errores);
+    if (Object.keys(errores).length) return;
+
     setGuardando(true);
     try {
       const usuarioGuardado = JSON.parse(localStorage.getItem("user") || localStorage.getItem("usuario") || "{}") || {};
@@ -83,10 +113,12 @@ export default function AppCliente() {
 
       if (passwordNueva) {
         setPasswordNueva("");
+        setConfirmarPassword("");
       }
 
       setModalAbierto(false);
       setCampoEditable(null);
+      setErroresPerfil({});
     } catch (error) {
       alert(error.message);
     } finally {
@@ -95,9 +127,16 @@ export default function AppCliente() {
   }
 
   function cerrarSesion() {
+    setConfirmarSalida(true);
+  }
+
+  function confirmarCerrarSesion() {
     localStorage.removeItem("user");
+    localStorage.removeItem("usuario");
     localStorage.removeItem("token");
-    navigate("/");
+    localStorage.removeItem("usuarioId");
+    sessionStorage.setItem("salida-confirmada", "true");
+    window.location.replace("/");
   }
 
   return (
@@ -158,8 +197,8 @@ export default function AppCliente() {
 
       <Outlet />
 
-      <div className={`modal-overlay ${modalAbierto ? "show" : ""}`}>
-        <div className="modal-user">
+      <div className={`modal-overlay ${modalAbierto ? "show" : ""}`} onMouseDown={(e) => e.target === e.currentTarget && setModalAbierto(false)}>
+        <div className="modal-user" role="dialog" aria-modal="true" aria-labelledby="perfil-titulo">
           <button
             className="modal-close"
             onClick={() => setModalAbierto(false)}
@@ -169,7 +208,9 @@ export default function AppCliente() {
           <div className="user-avatar-lg">
             <i className="bi bi-person-fill"></i>
           </div>
-          <h5 className="modal-user-title">Datos del usuario</h5>
+          <p className="profile-kicker">Mi cuenta</p>
+          <h5 className="modal-user-title" id="perfil-titulo">Datos del usuario</h5>
+          <p className="profile-intro">Actualiza tus datos personales de forma segura.</p>
 
           <form onSubmit={guardarCambios}>
             <div className="user-field-group">
@@ -203,6 +244,7 @@ export default function AppCliente() {
                       ></i>
                     </button>
                   </div>
+                  {erroresPerfil[campo] && <small className="profile-field-error">{erroresPerfil[campo]}</small>}
                 </div>
               ))}
 
@@ -213,7 +255,7 @@ export default function AppCliente() {
                   placeholder="Nueva contraseña"
                   value={passwordNueva}
                   disabled={campoEditable !== "password"}
-                  onChange={(e) => setPasswordNueva(e.target.value)}
+                  onChange={(e) => manejarPasswordNueva(e.target.value)}
                 />
                 <button
                   type="button"
@@ -231,6 +273,21 @@ export default function AppCliente() {
                   ></i>
                 </button>
               </div>
+              {erroresPerfil.password && <small className="profile-field-error">{erroresPerfil.password}</small>}
+
+              {campoEditable === "password" && (
+                <div className="user-field">
+                  <label htmlFor="confirmar-password">Confirmar contraseña nueva</label>
+                  <input
+                    id="confirmar-password"
+                    type="password"
+                    placeholder="Repite la nueva contraseña"
+                    value={confirmarPassword}
+                    onChange={(e) => setConfirmarPassword(e.target.value)}
+                  />
+                  {erroresPerfil.confirmarPassword && <small className="profile-field-error">{erroresPerfil.confirmarPassword}</small>}
+                </div>
+              )}
             </div>
 
             <div className="mt-3 text-center">
@@ -241,6 +298,20 @@ export default function AppCliente() {
           </form>
         </div>
       </div>
+
+      {confirmarSalida && (
+        <div className="logout-confirm-overlay" role="presentation">
+          <div className="logout-confirm" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+            <div className="logout-confirm__icon"><i className="bi bi-box-arrow-right"></i></div>
+            <h5 id="logout-title">¿Seguro que deseas salir?</h5>
+            <p>Tu sesión se cerrará y tendrás que iniciar sesión nuevamente para volver a tu cuenta.</p>
+            <div className="logout-confirm__actions">
+              <button type="button" className="logout-confirm__cancel" onClick={() => setConfirmarSalida(false)}>Cancelar</button>
+              <button type="button" className="logout-confirm__accept" onClick={confirmarCerrarSesion}>Sí, salir</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

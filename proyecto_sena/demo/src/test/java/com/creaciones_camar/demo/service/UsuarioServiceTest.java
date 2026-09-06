@@ -1,6 +1,7 @@
 package com.creaciones_camar.demo.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +34,8 @@ class UsuarioServiceTest {
         usuario.setNombres("Ana");
         usuario.setApellidos("Pérez");
         usuario.setEmail("ana@correo.com");
-        usuario.setPassword("123456");
+        usuario.setNuip("1234567890");
+        usuario.setPassword("Clave123");
         usuario.setActivo(true);
 
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> {
@@ -54,5 +56,21 @@ class UsuarioServiceTest {
                 eq("INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (?, ?)"),
                 eq(10L),
                 eq(3L));
+    }
+
+    @Test
+    void crearUsuario_debeRechazarNuipInvalido() {
+        Usuario usuario = new Usuario();
+        usuario.setNombres("Ana");
+        usuario.setApellidos("Pérez");
+        usuario.setEmail("ana@correo.com");
+        usuario.setNuip("ABC123");
+        usuario.setPassword("ClaveSegura123");
+        usuario.setActivo(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.crearUsuario(usuario));
+
+        assertEquals("El NUIP debe contener solo números y tener entre 6 y 15 dígitos.", exception.getMessage());
     }
 }

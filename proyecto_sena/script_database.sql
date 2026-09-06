@@ -29,6 +29,7 @@ CREATE TABLE usuarios (
     id_usuario BIGINT NOT NULL AUTO_INCREMENT,
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
+    nuip VARCHAR(15) NOT NULL,
     email VARCHAR(150) NOT NULL,
     telefono VARCHAR(20) NULL,
     password VARCHAR(255) NOT NULL,
@@ -36,6 +37,7 @@ CREATE TABLE usuarios (
     fecha_registro DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     tipo_documento_id BIGINT NULL,
     PRIMARY KEY (id_usuario),
+    UNIQUE KEY uq_usuarios_nuip (nuip),
     UNIQUE KEY uq_usuarios_email (email),
     KEY idx_usuarios_activo (activo),
     KEY idx_usuarios_tipo_documento (tipo_documento_id),
@@ -246,12 +248,12 @@ INSERT INTO categorias (tipo_categoria, descripcion) VALUES
     ('Pantalones', 'Pantalones casuales y formales'),
     ('Accesorios', 'Accesorios complementarios');
 
-INSERT INTO usuarios (nombres, apellidos, email, telefono, password, activo, tipo_documento_id) VALUES
-    ('Admin', 'Sistema', 'admin@creacionescamar.com', '3000000000', 'admin123', 1,
+INSERT INTO usuarios (nombres, apellidos, nuip, email, telefono, password, activo, tipo_documento_id) VALUES
+    ('Admin', 'Sistema', '1000000001', 'admin@creacionescamar.com', '3000000000', 'admin123', 1,
         (SELECT id_tipo FROM tipo_documentos WHERE tipo = 'Cédula de ciudadanía')),
-    ('Empleado', 'Principal', 'empleado@creacionescamar.com', '3000000001', 'empleado123', 1,
+    ('Empleado', 'Principal', '1000000002', 'empleado@creacionescamar.com', '3000000001', 'empleado123', 1,
         (SELECT id_tipo FROM tipo_documentos WHERE tipo = 'Cédula de ciudadanía')),
-    ('Cliente', 'Demo', 'cliente@creacionescamar.com', '3000000002', 'cliente123', 1,
+    ('Cliente', 'Demo', '1000000003', 'cliente@creacionescamar.com', '3000000002', 'cliente123', 1,
         (SELECT id_tipo FROM tipo_documentos WHERE tipo = 'Cédula de ciudadanía'));
 
 INSERT INTO usuario_roles (usuario_id, rol_id)

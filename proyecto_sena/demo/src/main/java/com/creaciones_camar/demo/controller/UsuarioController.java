@@ -39,12 +39,17 @@ public class UsuarioController {
     public ResponseEntity<Map<String, Object>> registrarUsuario(@RequestBody Map<String, Object> payload) {
         String nombres = obtenerTexto(payload, "nombres", "p_nom_usuario");
         String apellidos = obtenerTexto(payload, "apellidos", "p_ape_usuario");
+        String nuip = obtenerTexto(payload, "nuip", "nuipUsuario", "documento");
         String email = obtenerTexto(payload, "email", "correo");
         String telefono = obtenerTexto(payload, "telefono");
         String password = obtenerTexto(payload, "password");
 
-        if (nombres == null || apellidos == null || email == null || password == null) {
+        if (nombres == null || apellidos == null || nuip == null || email == null || password == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Faltan datos obligatorios para el registro."));
+        }
+
+        if (!nuip.trim().matches("\\d{6,15}")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El NUIP debe contener solo números y tener entre 6 y 15 dígitos."));
         }
 
         String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
@@ -55,6 +60,7 @@ public class UsuarioController {
         Usuario usuario = new Usuario();
         usuario.setNombres(nombres.trim());
         usuario.setApellidos(apellidos.trim());
+        usuario.setNuip(nuip.trim());
         usuario.setEmail(emailNormalizado);
         usuario.setTelefono(telefono == null ? "" : telefono.trim());
         usuario.setPassword(password);
@@ -147,6 +153,11 @@ public class UsuarioController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> manejarValidacion(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+    }
+
     @PutMapping("/{id}/activar")
     public ResponseEntity<Void> activarUsuario(@PathVariable Long id) {
         usuarioService.activarUsuario(id);
@@ -180,6 +191,7 @@ public class UsuarioController {
         publico.put("idUsuario", usuario.getIdUsuario());
         publico.put("nombres", usuario.getNombres());
         publico.put("apellidos", usuario.getApellidos());
+        publico.put("nuip", usuario.getNuip());
         publico.put("email", usuario.getEmail());
         publico.put("telefono", usuario.getTelefono());
         publico.put("rol", rol);

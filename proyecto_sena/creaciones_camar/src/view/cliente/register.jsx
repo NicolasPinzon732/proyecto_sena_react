@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../utils/api";
+import { validarRegistroCompleto } from "../utils/validacionesRegistro";
 
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     p_nom_usuario: "",
     p_ape_usuario: "",
+    nuip: "",
     correo: "",
     telefono: "",
     password: "",
@@ -15,6 +17,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [errores, setErrores] = useState({});
 
   function manejarCambio(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,13 +28,18 @@ export default function Register() {
     setError("");
     setExito("");
 
-    if (!form.p_nom_usuario || !form.p_ape_usuario || !form.correo || !form.password) {
-      setError("Nombre, apellido, correo y contraseña son obligatorios.");
-      return;
-    }
-
-    if (form.password !== form.confirmarPassword) {
-      setError("Las contraseñas no coinciden.");
+    const validacion = validarRegistroCompleto({
+      nombres: form.p_nom_usuario,
+      apellidos: form.p_ape_usuario,
+      nuip: form.nuip,
+      email: form.correo,
+      telefono: form.telefono,
+      password: form.password,
+      confirmPassword: form.confirmarPassword,
+    });
+    setErrores(validacion);
+    if (Object.keys(validacion).length > 0) {
+      setError("Revisa los campos marcados antes de continuar.");
       return;
     }
 
@@ -42,6 +50,7 @@ export default function Register() {
         body: JSON.stringify({
           p_nom_usuario: form.p_nom_usuario,
           p_ape_usuario: form.p_ape_usuario,
+          nuip: form.nuip,
           correo: form.correo,
           telefono: form.telefono || undefined,
           password: form.password,
@@ -77,6 +86,7 @@ export default function Register() {
                 onChange={manejarCambio}
                 required
               />
+              {errores.nombres && <small className="register-field-error">{errores.nombres}</small>}
             </div>
 
             <div className="mb-3">
@@ -89,6 +99,22 @@ export default function Register() {
                 onChange={manejarCambio}
                 required
               />
+              {errores.apellidos && <small className="register-field-error">{errores.apellidos}</small>}
+            </div>
+
+            <div className="mb-3">
+              <input
+                type="text"
+                name="nuip"
+                className="form-control"
+                placeholder="NUIP"
+                value={form.nuip}
+                onChange={manejarCambio}
+                maxLength="15"
+                inputMode="numeric"
+                required
+              />
+              {errores.nuip && <small className="register-field-error">{errores.nuip}</small>}
             </div>
 
             <div className="mb-3">
@@ -101,6 +127,7 @@ export default function Register() {
                 onChange={manejarCambio}
                 required
               />
+              {errores.email && <small className="register-field-error">{errores.email}</small>}
             </div>
 
             <div className="mb-3">
@@ -112,6 +139,7 @@ export default function Register() {
                 value={form.telefono}
                 onChange={manejarCambio}
               />
+              {errores.telefono && <small className="register-field-error">{errores.telefono}</small>}
             </div>
 
             <div className="mb-3">
@@ -124,6 +152,7 @@ export default function Register() {
                 onChange={manejarCambio}
                 required
               />
+              {errores.password && <small className="register-field-error">{errores.password}</small>}
             </div>
 
             <div className="mb-3">
@@ -136,6 +165,7 @@ export default function Register() {
                 onChange={manejarCambio}
                 required
               />
+              {errores.confirmPassword && <small className="register-field-error">{errores.confirmPassword}</small>}
             </div>
 
             <button type="submit" className="btn btn-main w-100 mb-3" disabled={cargando}>

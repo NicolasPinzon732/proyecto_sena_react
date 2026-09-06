@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
+import { validarRegistroCompleto } from '../../utils/validacionesRegistro';
 
 export default function UsuarioForm() {
   const { id } = useParams();
@@ -11,12 +12,14 @@ export default function UsuarioForm() {
     tipoDocumento: { idTipo: '' },
     nombres: '',
     apellidos: '',
+    nuip: '',
     email: '',
     telefono: '',
     password: '',
     rol: 'cliente',
   });
   const [tiposDocumento, setTiposDocumento] = useState([]);
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(id ? true : false);
 
   useEffect(() => {
@@ -58,6 +61,30 @@ export default function UsuarioForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const errores = validarRegistroCompleto({
+      nombres: formData.nombres,
+      apellidos: formData.apellidos,
+      nuip: formData.nuip,
+      email: formData.email,
+      telefono: formData.telefono,
+      password: formData.password || 'Password123',
+      confirmPassword: formData.password || 'Password123',
+    });
+
+    if (!formData.nuip) {
+      errores.nuip = 'El NUIP es obligatorio.';
+    }
+
+    if (!formData.email || !formData.email.includes('@')) {
+      errores.email = 'Ingresa un correo válido con formato usuario@dominio.com.';
+    }
+
+    setErrors(errores);
+    if (Object.keys(errores).length > 0) {
+      return;
+    }
+
     try {
       const method = id ? 'PUT' : 'POST';
       const url = id
@@ -159,6 +186,22 @@ export default function UsuarioForm() {
                 onChange={handleChange}
                 required
               />
+              {errors.apellidos && <small className="register-field-error">{errors.apellidos}</small>}
+            </div>
+
+            <div className="col-12 col-md-6">
+              <label className="form-label">NUIP</label>
+              <input
+                type="text"
+                name="nuip"
+                className="form-control"
+                value={formData.nuip}
+                onChange={handleChange}
+                maxLength="15"
+                inputMode="numeric"
+                required
+              />
+              {errors.nuip && <small className="register-field-error">{errors.nuip}</small>}
             </div>
 
             <div className="col-12 col-md-6">
@@ -171,6 +214,7 @@ export default function UsuarioForm() {
                 onChange={handleChange}
                 required
               />
+              {errors.email && <small className="register-field-error">{errors.email}</small>}
             </div>
 
             <div className="col-12 col-md-6">
@@ -183,6 +227,7 @@ export default function UsuarioForm() {
                 onChange={handleChange}
                 required
               />
+              {errors.telefono && <small className="register-field-error">{errors.telefono}</small>}
             </div>
 
             <div className="col-12 col-md-6">

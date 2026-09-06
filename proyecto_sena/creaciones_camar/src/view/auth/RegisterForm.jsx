@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { validarCampoRegistro } from '../../utils/validacionesRegistro';
+import { validarCampoRegistro, validarRegistroCompleto } from '../../utils/validacionesRegistro';
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
+    nuip: '',
     email: '',
     telefono: '',
     password: '',
@@ -37,38 +38,11 @@ export default function RegisterForm() {
     setSuccess('');
     setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      setLoading(false);
-      return;
-    }
+    const errores = validarRegistroCompleto(formData);
+    setFieldErrors(errores);
 
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/.test(formData.nombres.trim())) {
-      setError('Los nombres solo pueden contener letras');
-      setLoading(false);
-      return;
-    }
-
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/.test(formData.apellidos.trim())) {
-      setError('Los apellidos solo pueden contener letras');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.email.includes('@')) {
-      setError('El correo debe contener el símbolo @');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.telefono && !/^\d+$/.test(formData.telefono)) {
-      setError('El teléfono solo puede contener números');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError('La contraseña debe tener mínimo 8 caracteres');
+    if (Object.keys(errores).length > 0) {
+      setError('Revisa los campos marcados antes de continuar.');
       setLoading(false);
       return;
     }
@@ -80,6 +54,7 @@ export default function RegisterForm() {
         body: JSON.stringify({
           nombres: formData.nombres,
           apellidos: formData.apellidos,
+          nuip: formData.nuip,
           email: formData.email,
           telefono: formData.telefono || '',
           password: formData.password,
@@ -152,6 +127,22 @@ export default function RegisterForm() {
                 />
                 {fieldErrors.apellidos && <small className="register-field-error">{fieldErrors.apellidos}</small>}
               </div>
+            </div>
+
+            <div className="mb-3 text-start">
+              <label className="form-label">NUIP</label>
+              <input
+                type="text"
+                name="nuip"
+                className="form-control"
+                value={formData.nuip}
+                onChange={handleChange}
+                maxLength="15"
+                inputMode="numeric"
+                placeholder="Solo números"
+                required
+              />
+              {fieldErrors.nuip && <small className="register-field-error">{fieldErrors.nuip}</small>}
             </div>
 
             <div className="mb-3 text-start">

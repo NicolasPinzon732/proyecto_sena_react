@@ -146,7 +146,7 @@ export default function AppCliente() {
           <img
             src="/logo.png"
             alt="Logo"
-            style={{ width: 65, height: 65, objectFit: "contain" }}
+            className="brand-logo"
           />
           <span className="brand-name">Creaciones Camar</span>
         </div>

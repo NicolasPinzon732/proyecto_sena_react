@@ -40,6 +40,9 @@ public class Usuario {
     @Column(name = "email", unique = true, nullable = false, length = 150)
     private String email;
 
+    @Column(name = "nuip", unique = true, nullable = false, length = 15)
+    private String nuip;
+
     @Column(name = "telefono", length = 20)
     private String telefono;
 
@@ -70,6 +73,9 @@ public class Usuario {
 
     @PrePersist
     protected void onCreate() {
+        if (nuip != null) {
+            nuip = nuip.replace(" ", "").trim();
+        }
         if (fechaRegistro == null) {
             fechaRegistro = LocalDateTime.now();
         }

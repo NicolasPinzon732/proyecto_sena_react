@@ -20,6 +20,8 @@ public class UsuarioService {
 
     // CREATE
     public Usuario crearUsuario(Usuario usuario) {
+        validarUsuario(usuario, true);
+
         if (usuario.getRol() == null || usuario.getRol().isBlank()) {
             usuario.setRol("cliente");
         }
@@ -97,15 +99,57 @@ public class UsuarioService {
         Optional<Usuario> existente = usuarioRepository.findById(id);
         if (existente.isPresent()) {
             Usuario usuario = existente.get();
+            if (usuarioActualizado.getNuip() != null) {
+                usuario.setNuip(usuarioActualizado.getNuip());
+            }
             if (usuarioActualizado.getNombres() != null) usuario.setNombres(usuarioActualizado.getNombres());
             if (usuarioActualizado.getApellidos() != null) usuario.setApellidos(usuarioActualizado.getApellidos());
             if (usuarioActualizado.getEmail() != null) usuario.setEmail(usuarioActualizado.getEmail());
             if (usuarioActualizado.getTelefono() != null) usuario.setTelefono(usuarioActualizado.getTelefono());
             if (usuarioActualizado.getPassword() != null) usuario.setPassword(usuarioActualizado.getPassword());
             if (usuarioActualizado.getRol() != null) usuario.setRol(usuarioActualizado.getRol());
+            validarUsuario(usuario, usuarioActualizado.getPassword() != null);
             return usuarioRepository.save(usuario);
         }
         return null;
+    }
+
+    private void validarUsuario(Usuario usuario, boolean validarPassword) {
+        if (usuario == null) {
+            throw new IllegalArgumentException("El usuario no puede ser nulo.");
+        }
+
+        if (usuario.getNombres() == null || !usuario.getNombres().trim().matches("[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]{2,100}")) {
+            throw new IllegalArgumentException("Los nombres son obligatorios.");
+        }
+
+        if (usuario.getApellidos() == null || !usuario.getApellidos().trim().matches("[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]{2,100}")) {
+            throw new IllegalArgumentException("Los apellidos son obligatorios.");
+        }
+
+        if (usuario.getEmail() == null || !usuario.getEmail().trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException("Ingresa un correo válido.");
+        }
+
+        if (usuario.getNuip() == null || !usuario.getNuip().trim().matches("\\d{6,15}")) {
+            throw new IllegalArgumentException("El NUIP debe contener solo números y tener entre 6 y 15 dígitos.");
+        }
+
+        if (validarPassword && (usuario.getPassword() == null || !usuario.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"))) {
+            throw new IllegalArgumentException("La contraseña debe tener mínimo 8 caracteres e incluir mayúscula, minúscula y número.");
+        }
+
+        if (usuario.getTelefono() != null && !usuario.getTelefono().trim().matches("\\d{7,15}")) {
+            throw new IllegalArgumentException("El teléfono debe contener solo números y tener mínimo 7 dígitos.");
+        }
+
+        usuario.setNuip(usuario.getNuip().trim());
+        usuario.setNombres(usuario.getNombres().trim());
+        usuario.setApellidos(usuario.getApellidos().trim());
+        usuario.setEmail(usuario.getEmail().trim().toLowerCase());
+        if (usuario.getTelefono() != null) {
+            usuario.setTelefono(usuario.getTelefono().trim());
+        }
     }
 
     // DELETE

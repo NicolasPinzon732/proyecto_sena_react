@@ -58,6 +58,7 @@ public class StockTallaService {
             }
             productoTalla.setCantidad(productoTalla.getCantidad() - cantidad);
             productoTallaRepository.save(productoTalla);
+                sincronizarTallaEnProducto(producto, tallaSolicitada, productoTalla.getCantidad());
             producto.setStockTotal(productoTallaRepository.findByProductoId(producto.getId()).stream()
                     .mapToInt(item -> item.getCantidad() == null ? 0 : item.getCantidad().intValue()).sum());
             return;
@@ -76,6 +77,48 @@ public class StockTallaService {
         talla.setCantidad(talla.getCantidad() - cantidad);
         producto.setTallas(escribir(tallas));
         producto.setStockTotal(tallas.stream().mapToInt(StockTalla::getCantidad).sum());
+    }
+
+    public void incrementar(Producto producto, String tallaSolicitada, int cantidad) {
+        if (cantidad <= 0) return;
+
+        Optional<ProductoTalla> relacion = productoTallaRepository.findByProductoIdAndTallaNombreIgnoreCase(
+                producto.getId(), tallaSolicitada);
+        if (relacion.isPresent()) {
+            ProductoTalla productoTalla = relacion.get();
+            productoTalla.setCantidad((productoTalla.getCantidad() == null ? 0 : productoTalla.getCantidad()) + cantidad);
+            productoTallaRepository.save(productoTalla);
+            sincronizarTallaEnProducto(producto, tallaSolicitada, productoTalla.getCantidad());
+            producto.setStockTotal(productoTallaRepository.findByProductoId(producto.getId()).stream()
+                    .mapToInt(item -> item.getCantidad() == null ? 0 : item.getCantidad().intValue()).sum());
+            return;
+        }
+
+        List<StockTalla> tallas = leer(producto);
+        StockTalla talla = tallas.stream()
+                .filter(item -> item.getTalla().equalsIgnoreCase(tallaSolicitada == null ? "" : tallaSolicitada.trim()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("La talla seleccionada no existe"));
+        talla.setCantidad(talla.getCantidad() + cantidad);
+        producto.setTallas(escribir(tallas));
+        producto.setStockTotal(tallas.stream().mapToInt(StockTalla::getCantidad).sum());
+    }
+
+    private void sincronizarTallaEnProducto(Producto producto, String tallaSolicitada, int cantidad) {
+        List<StockTalla> tallas = leer(producto);
+        boolean encontrada = false;
+
+        for (StockTalla talla : tallas) {
+            if (talla.getTalla().equalsIgnoreCase(tallaSolicitada.trim())) {
+                talla.setCantidad(cantidad);
+                encontrada = true;
+                break;
+            }
+        }
+
+        if (encontrada) {
+            producto.setTallas(escribir(tallas));
+        }
     }
 
     public void sincronizar(Producto producto) {

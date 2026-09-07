@@ -3,6 +3,12 @@ import { Link } from "react-router-dom";
 import "../../styles/style_cliente.css";
 import { actualizarCantidad, eliminarDelCarrito, obtenerCarrito, vaciarCarrito } from "../../utils/cart";
 
+function obtenerImagen(imagen) {
+  if (!imagen) return "";
+  if (imagen.startsWith("http")) return imagen;
+  return `http://localhost:8080${imagen.startsWith("/") ? imagen : `/${imagen}`}`;
+}
+
 const COSTO_ENVIO = 12000;
 
 function formatearPrecio(precio) {
@@ -43,7 +49,7 @@ export default function Carrito() {
               <div key={item.key} className="carrito-item">
                 <div className="carrito-item-img">
                   {item.producto?.imagen ? (
-                    <img src={`http://localhost:8000${item.producto.imagen}`} alt={item.producto.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={obtenerImagen(item.producto.imagen)} alt={item.producto.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <i className="bi bi-image"></i>
                   )}

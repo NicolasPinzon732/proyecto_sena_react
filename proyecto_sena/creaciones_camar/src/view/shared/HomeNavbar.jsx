@@ -13,10 +13,12 @@ export default function HomeNavbar({ role = 'admin' }) {
           { to: '/admin/usuarios', label: 'Usuarios' },
           { to: '/admin/productos', label: 'Productos' },
           { to: '/admin/pedidos', label: 'Pedidos' },
+          { to: '/perfil', label: 'Mi perfil' },
         ]
       : [
           { to: '/empleado', label: 'Dashboard' },
           { to: '/empleado/pedidos', label: 'Pedidos' },
+          { to: '/perfil', label: 'Mi perfil' },
         ];
 
   function confirmarCerrarSesion() {

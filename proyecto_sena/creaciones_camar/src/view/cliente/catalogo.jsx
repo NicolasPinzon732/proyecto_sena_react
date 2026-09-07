@@ -13,8 +13,8 @@ function obtenerNombre(producto) {
 
 function obtenerImagen(imagen) {
   if (!imagen) return "";
-  if (imagen.startsWith("http") || imagen.startsWith("/")) return imagen;
-  return `http://localhost:8000${imagen}`;
+  if (imagen.startsWith("http")) return imagen;
+  return `http://localhost:8080${imagen.startsWith("/") ? imagen : `/${imagen}`}`;
 }
 
 export default function Catalogo() {

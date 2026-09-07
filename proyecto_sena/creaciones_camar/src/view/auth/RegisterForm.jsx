@@ -42,7 +42,8 @@ export default function RegisterForm() {
     setFieldErrors(errores);
 
     if (Object.keys(errores).length > 0) {
-      setError('Revisa los campos marcados antes de continuar.');
+      const mensaje = Object.values(errores)[0];
+      setError(mensaje);
       setLoading(false);
       return;
     }
@@ -84,14 +85,14 @@ export default function RegisterForm() {
           <h5 className="mb-4 fw-bold">Crear cuenta</h5>
 
           {error && (
-            <div className="alert alert-danger mb-4">
+            <div className="app-validation-alert alert alert-danger mb-4">
               <i className="bi bi-exclamation-circle me-2"></i>
               {error}
             </div>
           )}
 
           {success && (
-            <div className="alert alert-success mb-4">
+            <div className="app-validation-alert alert alert-success mb-4">
               <i className="bi bi-check-circle me-2"></i>
               {success}
             </div>
@@ -107,9 +108,6 @@ export default function RegisterForm() {
                   className="form-control"
                   value={formData.nombres}
                   onChange={handleChange}
-                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
-                  title="Solo se permiten letras"
-                  required
                 />
                 {fieldErrors.nombres && <small className="register-field-error">{fieldErrors.nombres}</small>}
               </div>
@@ -121,9 +119,6 @@ export default function RegisterForm() {
                   className="form-control"
                   value={formData.apellidos}
                   onChange={handleChange}
-                  pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+"
-                  title="Solo se permiten letras"
-                  required
                 />
                 {fieldErrors.apellidos && <small className="register-field-error">{fieldErrors.apellidos}</small>}
               </div>
@@ -140,7 +135,6 @@ export default function RegisterForm() {
                 maxLength="15"
                 inputMode="numeric"
                 placeholder="Solo números"
-                required
               />
               {fieldErrors.nuip && <small className="register-field-error">{fieldErrors.nuip}</small>}
             </div>
@@ -148,14 +142,11 @@ export default function RegisterForm() {
             <div className="mb-3 text-start">
               <label className="form-label">Email</label>
               <input
-                type="email"
+                type="text"
                 name="email"
                 className="form-control"
                 value={formData.email}
                 onChange={handleChange}
-                pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-                title="Ingresa un correo válido con @"
-                required
               />
               {fieldErrors.email && <small className="register-field-error">{fieldErrors.email}</small>}
             </div>
@@ -168,8 +159,6 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.telefono}
                 onChange={handleChange}
-                pattern="[0-9]+"
-                title="Solo se permiten números"
               />
               {fieldErrors.telefono && <small className="register-field-error">{fieldErrors.telefono}</small>}
             </div>
@@ -182,8 +171,6 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.password}
                 onChange={handleChange}
-                minLength="8"
-                required
               />
               {fieldErrors.password && <small className="register-field-error">{fieldErrors.password}</small>}
             </div>
@@ -196,8 +183,6 @@ export default function RegisterForm() {
                 className="form-control"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                minLength="8"
-                required
               />
               {fieldErrors.confirmPassword && <small className="register-field-error">{fieldErrors.confirmPassword}</small>}
             </div>

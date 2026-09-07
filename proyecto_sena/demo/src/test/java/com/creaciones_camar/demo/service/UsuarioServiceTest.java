@@ -71,6 +71,6 @@ class UsuarioServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> usuarioService.crearUsuario(usuario));
 
-        assertEquals("El NUIP debe contener solo números y tener entre 6 y 15 dígitos.", exception.getMessage());
+        assertEquals("El NUIP debe contener solo números y tener entre 4 y 15 dígitos.", exception.getMessage());
     }
 }

@@ -17,11 +17,16 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.creaciones_camar.demo.model.DetallePedido;
+import com.creaciones_camar.demo.model.Ciudad;
+import com.creaciones_camar.demo.model.Pais;
 import com.creaciones_camar.demo.model.Pedido;
 import com.creaciones_camar.demo.model.Producto;
 import com.creaciones_camar.demo.model.Usuario;
 import com.creaciones_camar.demo.repository.PedidoRepository;
 import com.creaciones_camar.demo.repository.ProductoRepository;
+import com.creaciones_camar.demo.repository.CiudadRepository;
+import com.creaciones_camar.demo.repository.PaisRepository;
+import com.creaciones_camar.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +37,15 @@ class PedidoServiceTest {
 
     @Mock
     private ProductoRepository productoRepository;
+
+    @Mock
+    private CiudadRepository ciudadRepository;
+
+    @Mock
+    private PaisRepository paisRepository;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     @Mock
     private StockTallaService stockTallaService;
@@ -52,6 +66,9 @@ class PedidoServiceTest {
         pedido.setFechaPedido(LocalDateTime.now());
         pedido.setTotal(BigDecimal.valueOf(150000));
         pedido.setEstado("pendiente");
+        pedido.setPais("Colombia");
+        pedido.setCiudad("Bogota");
+        pedido.setDireccion("Calle 1 #2-3");
 
         DetallePedido detalle = new DetallePedido();
         detalle.setProducto(producto);
@@ -62,9 +79,16 @@ class PedidoServiceTest {
 
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
         producto.setNombre("Chaqueta");
+        producto.setPrecio(BigDecimal.valueOf(75000));
         producto.setStockTotal(8);
         producto.setTallas("[{\"talla\":\"M\",\"cantidad\":8}]");
         when(productoRepository.findById(5L)).thenReturn(java.util.Optional.of(producto));
+        when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuario));
+        Pais pais = new Pais();
+        Ciudad ciudad = new Ciudad();
+        when(paisRepository.findByNombreIgnoreCase("Colombia")).thenReturn(java.util.Optional.of(pais));
+        when(ciudadRepository.findByNombreIgnoreCaseAndPaisNombreIgnoreCase("Bogota", "Colombia"))
+            .thenReturn(java.util.Optional.of(ciudad));
 
         Pedido guardado = pedidoService.crearPedido(pedido);
 

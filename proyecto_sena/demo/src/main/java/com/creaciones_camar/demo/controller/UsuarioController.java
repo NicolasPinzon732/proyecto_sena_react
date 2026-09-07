@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.creaciones_camar.demo.model.Usuario;
+import com.creaciones_camar.demo.model.TipoDocumento;
 import com.creaciones_camar.demo.service.UsuarioService;
 
 @RestController
@@ -31,6 +32,9 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario) {
+        if (usuario == null || usuario.getTipoDocumento() == null || usuario.getTipoDocumento().getIdTipo() == null) {
+            return ResponseEntity.badRequest().build();
+        }
         Usuario nuevoUsuario = usuarioService.crearUsuario(usuario);
         return new ResponseEntity<>(nuevoUsuario, HttpStatus.CREATED);
     }
@@ -43,13 +47,18 @@ public class UsuarioController {
         String email = obtenerTexto(payload, "email", "correo");
         String telefono = obtenerTexto(payload, "telefono");
         String password = obtenerTexto(payload, "password");
+        Object tipoDocumentoPayload = payload.get("tipoDocumento");
+        Long tipoDocumentoId = null;
+        if (tipoDocumentoPayload instanceof Map<?, ?> tipoDocumentoMap && tipoDocumentoMap.get("idTipo") != null) {
+            tipoDocumentoId = Long.valueOf(String.valueOf(tipoDocumentoMap.get("idTipo")));
+        }
 
-        if (nombres == null || apellidos == null || nuip == null || email == null || password == null) {
+        if (nombres == null || apellidos == null || nuip == null || email == null || password == null || tipoDocumentoId == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Faltan datos obligatorios para el registro."));
         }
 
-        if (!nuip.trim().matches("\\d{6,15}")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "El NUIP debe contener solo números y tener entre 6 y 15 dígitos."));
+        if (!nuip.trim().matches("\\d{4,15}")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El NUIP debe contener solo números y tener entre 4 y 15 dígitos."));
         }
 
         String emailNormalizado = email.trim().toLowerCase(Locale.ROOT);
@@ -62,8 +71,11 @@ public class UsuarioController {
         usuario.setApellidos(apellidos.trim());
         usuario.setNuip(nuip.trim());
         usuario.setEmail(emailNormalizado);
-        usuario.setTelefono(telefono == null ? "" : telefono.trim());
+        usuario.setTelefono(telefono == null ? null : telefono.trim());
         usuario.setPassword(password);
+        TipoDocumento tipoDocumento = new TipoDocumento();
+        tipoDocumento.setIdTipo(tipoDocumentoId);
+        usuario.setTipoDocumento(tipoDocumento);
         usuario.setRol("cliente");
         usuario.setActivo(true);
 
@@ -85,9 +97,14 @@ public class UsuarioController {
         String emailFinal = (email != null ? email : correoAlternativo);
         String passwordFinal = (password != null ? password : passwordAlternativo);
 
-        if (emailFinal == null || passwordFinal == null) {
+        if (emailFinal == null || emailFinal.isBlank() || passwordFinal == null || passwordFinal.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Email y contraseña son obligatorios."));
+                .body(Map.of("message", "Correo o contraseña incorrectos."));
+        }
+
+        if (!emailFinal.trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "Correo o contraseña incorrectos."));
         }
 
         Optional<Usuario> usuarioOpt = usuarioService.autenticar(emailFinal.trim().toLowerCase(Locale.ROOT), passwordFinal);
@@ -133,6 +150,12 @@ public class UsuarioController {
     @GetMapping("/activos")
     public ResponseEntity<List<Usuario>> obtenerActivos() {
         List<Usuario> usuarios = usuarioService.obtenerActivos();
+        return new ResponseEntity<>(usuarios, HttpStatus.OK);
+    }
+
+    @GetMapping("/inactivos")
+    public ResponseEntity<List<Usuario>> obtenerInactivos() {
+        List<Usuario> usuarios = usuarioService.obtenerInactivos();
         return new ResponseEntity<>(usuarios, HttpStatus.OK);
     }
 

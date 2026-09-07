@@ -10,4 +10,5 @@ import com.creaciones_camar.demo.model.Usuario;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByNuip(String nuip);
 }

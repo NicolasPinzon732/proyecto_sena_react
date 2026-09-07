@@ -20,6 +20,18 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!email.trim() || !password) {
+      const message = 'El correo y la contraseña son obligatorios.';
+      setError(message);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Correo o contraseña incorrectos.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,7 +68,7 @@ export default function LoginForm() {
           <h5 className="mb-4 fw-bold">Inicia sesión en Creaciones Camar</h5>
 
           {error && (
-            <div className="alert alert-danger mb-4">
+            <div className="app-validation-alert alert alert-danger mb-4">
               <i className="bi bi-exclamation-circle me-2"></i>
               {error}
             </div>
@@ -66,12 +78,11 @@ export default function LoginForm() {
             <div className="mb-3 text-start">
               <label className="form-label">Correo</label>
               <input
-                type="email"
+                type="text"
                 className="form-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                required
               />
             </div>
 
@@ -83,7 +94,6 @@ export default function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Contraseña"
-                required
               />
             </div>
 

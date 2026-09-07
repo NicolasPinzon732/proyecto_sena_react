@@ -6,6 +6,12 @@ export default function ProductosList() {
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState('');
 
+  const formatearImagen = (imagen) => {
+    if (!imagen) return '';
+    if (imagen.startsWith('http')) return imagen;
+    return `http://localhost:8080${imagen.startsWith('/') ? imagen : `/${imagen}`}`;
+  };
+
   useEffect(() => {
     const fetchProductos = async () => {
       try {
@@ -66,36 +72,48 @@ export default function ProductosList() {
       <div className="row g-4 admin-product-grid">
         {productos.map((producto) => (
           <div key={producto.id} className="col-12 col-md-6">
-            <div className="card card-custom admin-product-card p-3">
-              <div className="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <h6 className="mb-0 fw-bold">{producto.nombre}</h6>
-                  <small className="text-muted">{producto.categoria?.tipoCategoria}</small>
-                </div>
-                <div className="d-flex gap-2">
+            <article className="admin-product-card">
+              <div className="admin-product-card__visual">
+                {producto.imagen ? (
+                  <img src={formatearImagen(producto.imagen)} alt={producto.nombre} />
+                ) : (
+                  <i className="bi bi-image" aria-hidden="true"></i>
+                )}
+                <span className="admin-product-card__category">{producto.categoria?.tipoCategoria || 'Sin categoría'}</span>
+                <div className="admin-product-card__actions">
                   <a
                     href={`/admin/productos/${producto.id}/editar`}
-                    className="btn btn-sm btn-outline-secondary"
+                    className="admin-product-icon-button"
+                    aria-label={`Editar ${producto.nombre}`}
                   >
                     <i className="bi bi-pencil"></i>
                   </a>
                   <button
-                    className="btn btn-sm btn-outline-danger"
+                    type="button"
+                    className="admin-product-icon-button admin-product-icon-button--danger"
                     onClick={() => handleEliminar(producto.id)}
+                    aria-label={`Eliminar ${producto.nombre}`}
                   >
                     <i className="bi bi-trash"></i>
                   </button>
                 </div>
               </div>
 
-              <p className="text-muted small mb-1">{producto.descripcionCorta}</p>
-              <p className="fw-semibold mb-2">${producto.precio.toLocaleString()}</p>
-
-              <p className="small mb-1"><strong>Stock total</strong></p>
-              <span className={`badge ${producto.stockTotal > 10 ? 'bg-success' : 'bg-warning text-dark'}`}>
-                {producto.stockTotal} unidades
-              </span>
-            </div>
+              <div className="admin-product-card__body">
+                <div className="admin-product-card__heading">
+                  <div>
+                    <h2>{producto.nombre}</h2>
+                    <p>{producto.descripcionCorta || 'Producto de la colección Creaciones Camar.'}</p>
+                  </div>
+                  <strong>${Number(producto.precio || 0).toLocaleString('es-CO')}</strong>
+                </div>
+                <div className="admin-product-card__inventory">
+                  <span><i className="bi bi-box-seam"></i> Inventario</span>
+                  <b className={Number(producto.stockTotal || 0) === 0 ? 'is-empty' : ''}>{producto.stockTotal || 0} unidades</b>
+                </div>
+                <div className="admin-product-card__bar"><span style={{ width: `${Math.min(100, Number(producto.stockTotal || 0) * 5)}%` }}></span></div>
+              </div>
+            </article>
           </div>
         ))}
       </div>

@@ -1,7 +1,7 @@
 const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TELEFONO_REGEX = /^\d+$/;
-const NUIP_REGEX = /^\d{6,15}$/;
+const TELEFONO_REGEX = /^\+?\d{7,15}$/;
+const NUIP_REGEX = /^\d{4,15}$/;
 
 function limpiarTexto(valor) {
   return String(valor ?? '').trim();
@@ -27,7 +27,7 @@ export function validarCampoRegistro(campo, valor, formData = {}) {
       return 'El NUIP es obligatorio.';
     }
     if (!NUIP_REGEX.test(texto)) {
-      return 'El NUIP debe contener solo números y tener entre 6 y 15 dígitos.';
+      return 'El NUIP debe contener solo números y tener entre 4 y 15 dígitos.';
     }
   }
 
@@ -42,10 +42,7 @@ export function validarCampoRegistro(campo, valor, formData = {}) {
 
   if (campo === 'telefono') {
     if (texto && !TELEFONO_REGEX.test(texto)) {
-      return 'El teléfono solo puede contener números.';
-    }
-    if (texto && texto.length < 7) {
-      return 'El teléfono debe tener al menos 7 dígitos.';
+      return 'El teléfono debe contener entre 7 y 15 dígitos y puede incluir el prefijo +.';
     }
   }
 

@@ -5,6 +5,7 @@ import HomeNavbar from '../shared/HomeNavbar';
 export default function PedidosEmpleado() {
   const [pedidos, setPedidos] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState('');
+  const [errorEstado, setErrorEstado] = useState('');
 
   useEffect(() => {
     const fetchPedidos = async () => {
@@ -25,12 +26,16 @@ export default function PedidosEmpleado() {
 
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
-      await fetch(`http://localhost:8080/api/pedidos/${id}/estado/${nuevoEstado}`, {
+      setErrorEstado('');
+      const response = await fetch(`http://localhost:8080/api/pedidos/${id}/estado/${nuevoEstado}`, {
         method: 'PUT',
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'No se pudo actualizar el estado.');
       setPedidos(pedidos.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p));
     } catch (error) {
       console.error('Error al cambiar estado:', error);
+      setErrorEstado(error.message || 'No se pudo actualizar el estado.');
     }
   };
 
@@ -47,6 +52,7 @@ export default function PedidosEmpleado() {
       </div>
 
       <div className="card card-custom admin-filter-card empleado-filter-card p-3 mb-4">
+        {errorEstado && <div className="alert alert-danger mb-3">{errorEstado}</div>}
         <div className="row g-2 align-items-center">
           <div className="col-12 col-md-6">
             <select
@@ -59,6 +65,7 @@ export default function PedidosEmpleado() {
               <option value="confirmado">Pedidos Confirmados</option>
               <option value="enviado">Pedidos Enviados</option>
               <option value="entregado">Pedidos Entregados</option>
+              <option value="cancelado">Pedidos Cancelados</option>
             </select>
           </div>
         </div>
@@ -91,22 +98,39 @@ export default function PedidosEmpleado() {
                   <span>Actualizar estado</span>
                   <div>
                     <button
+                      type="button"
+                      className={`empleado-status-button ${pedido.estado === 'pendiente' ? 'active pending' : ''}`}
+                      onClick={() => cambiarEstado(pedido.id, 'pendiente')}
+                    >
+                      Pendiente
+                    </button>
+                    <button
+                      type="button"
                       className={`empleado-status-button ${pedido.estado === 'confirmado' ? 'active confirmed' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'confirmado')}
                     >
                       Confirmar
                     </button>
                     <button
+                      type="button"
                       className={`empleado-status-button ${pedido.estado === 'enviado' ? 'active shipped' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'enviado')}
                     >
                       Enviar
                     </button>
                     <button
+                      type="button"
                       className={`empleado-status-button ${pedido.estado === 'entregado' ? 'active delivered' : ''}`}
                       onClick={() => cambiarEstado(pedido.id, 'entregado')}
                     >
                       Entregado
+                    </button>
+                    <button
+                      type="button"
+                      className={`empleado-status-button ${pedido.estado === 'cancelado' ? 'active cancelled' : ''}`}
+                      onClick={() => cambiarEstado(pedido.id, 'cancelado')}
+                    >
+                      Cancelado
                     </button>
                   </div>
                 </div>

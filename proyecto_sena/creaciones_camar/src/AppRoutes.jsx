@@ -11,6 +11,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 // Admin
 import AdminDashboard from './view/admin/AdminDashboard';
 import UsuariosList from './view/admin/UsuariosList';
+import UsuariosInactivos from './view/admin/UsuariosInactivos';
 import UsuarioForm from './view/admin/UsuarioForm';
 import ProductosList from './view/admin/ProductosList';
 import ProductoForm from './view/admin/ProductoForm';
@@ -45,12 +46,14 @@ function AppRoutes() {
           }
         />
         <Route path="/admin/usuarios" element={<ProtectedRoute requiredRol="admin"><UsuariosList /></ProtectedRoute>} />
+        <Route path="/admin/usuarios/inactivos" element={<ProtectedRoute requiredRol="admin"><UsuariosInactivos /></ProtectedRoute>} />
         <Route path="/admin/usuarios/crear" element={<ProtectedRoute requiredRol="admin"><UsuarioForm /></ProtectedRoute>} />
         <Route path="/admin/usuarios/:id/editar" element={<ProtectedRoute requiredRol="admin"><UsuarioForm /></ProtectedRoute>} />
         <Route path="/admin/productos" element={<ProtectedRoute requiredRol="admin"><ProductosList /></ProtectedRoute>} />
         <Route path="/admin/productos/crear" element={<ProtectedRoute requiredRol="admin"><ProductoForm /></ProtectedRoute>} />
         <Route path="/admin/productos/:id/editar" element={<ProtectedRoute requiredRol="admin"><ProductoForm /></ProtectedRoute>} />
         <Route path="/admin/pedidos" element={<ProtectedRoute requiredRol="admin"><PedidosList /></ProtectedRoute>} />
+        <Route path="/perfil" element={<ProtectedRoute requiredRol={["admin", "empleado"]}><UsuarioForm self /></ProtectedRoute>} />
 
         <Route path="/cliente" element={<AppCliente />}>
           <Route index element={<Catalogo />} />

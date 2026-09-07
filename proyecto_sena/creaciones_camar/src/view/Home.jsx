@@ -149,7 +149,8 @@ function AuthModal({ onClose }) {
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [formData, setFormData] = useState({ nombres: '', apellidos: '', telefono: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ nombres: '', apellidos: '', nuip: '', tipoDocumento: { idTipo: '' }, telefono: '', confirmPassword: '' });
+  const [tiposDocumento, setTiposDocumento] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -165,6 +166,12 @@ function AuthModal({ onClose }) {
     };
 
     document.addEventListener('keydown', handleKeyDown);
+
+    fetch('http://localhost:8080/api/tipo-documentos')
+      .then((response) => response.json())
+      .then((data) => setTiposDocumento(data))
+      .catch((error) => console.error('Error al cargar tipos de documento:', error));
+
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
@@ -204,6 +211,16 @@ function AuthModal({ onClose }) {
   };
 
   const handleLogin = async () => {
+    if (!email.trim()) {
+      throw new Error('El correo es obligatorio.');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      throw new Error('Correo o contraseña incorrectos.');
+    }
+    if (!password) {
+      throw new Error('La contraseña es obligatoria.');
+    }
+
     const response = await fetch('http://localhost:8080/api/usuarios/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -226,6 +243,9 @@ function AuthModal({ onClose }) {
 
   const handleRegister = async () => {
     const errores = validarRegistroCompleto({ ...formData, email, password });
+    if (!formData.tipoDocumento?.idTipo) {
+      errores.tipoDocumento = 'Selecciona un tipo de documento.';
+    }
     if (Object.keys(errores).length) throw new Error(Object.values(errores)[0]);
 
     const response = await fetch('http://localhost:8080/api/usuarios/register', {
@@ -234,6 +254,8 @@ function AuthModal({ onClose }) {
       body: JSON.stringify({
         nombres: formData.nombres,
         apellidos: formData.apellidos,
+        nuip: formData.nuip,
+        tipoDocumento: formData.tipoDocumento,
         email,
         telefono: formData.telefono || '',
         password,
@@ -285,37 +307,74 @@ function AuthModal({ onClose }) {
             <div className="login-modal__names">
               <div>
                 <label htmlFor="modal-nombres">Nombres</label>
-                <input id="modal-nombres" name="nombres" type="text" value={formData.nombres} onChange={handleRegisterChange} pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo se permiten letras" required />
+                <input id="modal-nombres" name="nombres" type="text" value={formData.nombres} onChange={handleRegisterChange} />
                 {fieldErrors.nombres && <small className="register-field-error">{fieldErrors.nombres}</small>}
               </div>
               <div>
                 <label htmlFor="modal-apellidos">Apellidos</label>
-                <input id="modal-apellidos" name="apellidos" type="text" value={formData.apellidos} onChange={handleRegisterChange} pattern="[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+" title="Solo se permiten letras" required />
+                <input id="modal-apellidos" name="apellidos" type="text" value={formData.apellidos} onChange={handleRegisterChange} />
                 {fieldErrors.apellidos && <small className="register-field-error">{fieldErrors.apellidos}</small>}
               </div>
             </div>
           )}
 
+          {mode === 'register' && (
+            <>
+              <label htmlFor="modal-nuip">NUIP</label>
+              <input
+                id="modal-nuip"
+                name="nuip"
+                type="text"
+                value={formData.nuip}
+                onChange={handleRegisterChange}
+                maxLength="15"
+                inputMode="numeric"
+                placeholder="Solo números"
+              />
+              {fieldErrors.nuip && <small className="register-field-error">{fieldErrors.nuip}</small>}
+
+              <label htmlFor="modal-tipo-documento">Tipo de documento</label>
+              <select
+                id="modal-tipo-documento"
+                name="tipoDocumento"
+                value={formData.tipoDocumento?.idTipo || ''}
+                onChange={(event) => {
+                  setFormData((previous) => ({
+                    ...previous,
+                    tipoDocumento: { idTipo: event.target.value ? Number(event.target.value) : '' },
+                  }));
+                  setFieldErrors((previous) => ({ ...previous, tipoDocumento: '' }));
+                }}
+              >
+                <option value="">Selecciona tipo de documento</option>
+                {tiposDocumento.map((tipo) => (
+                  <option key={tipo.idTipo} value={tipo.idTipo}>{tipo.tipo}</option>
+                ))}
+              </select>
+              {fieldErrors.tipoDocumento && <small className="register-field-error">{fieldErrors.tipoDocumento}</small>}
+            </>
+          )}
+
           <label htmlFor="modal-email">Correo electrónico</label>
-          <input id="modal-email" name="email" type="email" value={email} onChange={handleEmailChange} placeholder="tu@email.com" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" title="Ingresa un correo válido con @" required />
+          <input id="modal-email" name="email" type="text" value={email} onChange={handleEmailChange} placeholder="tu@email.com" />
           {mode === 'register' && fieldErrors.email && <small className="register-field-error">{fieldErrors.email}</small>}
 
           {mode === 'register' && (
             <>
               <label htmlFor="modal-telefono">Teléfono</label>
-              <input id="modal-telefono" name="telefono" type="tel" value={formData.telefono} onChange={handleRegisterChange} pattern="[0-9]+" title="Solo se permiten números" />
+              <input id="modal-telefono" name="telefono" type="tel" value={formData.telefono} onChange={handleRegisterChange} />
               {fieldErrors.telefono && <small className="register-field-error">{fieldErrors.telefono}</small>}
             </>
           )}
 
           <label htmlFor="modal-password">Contraseña</label>
-          <input id="modal-password" name="password" type="password" value={password} onChange={handlePasswordChange} placeholder="Mínimo 8 caracteres" minLength="8" required />
+          <input id="modal-password" name="password" type="password" value={password} onChange={handlePasswordChange} placeholder="Mínimo 8 caracteres" />
           {mode === 'register' && fieldErrors.password && <small className="register-field-error">{fieldErrors.password}</small>}
 
           {mode === 'register' && (
             <>
               <label htmlFor="modal-confirm-password">Confirmar contraseña</label>
-              <input id="modal-confirm-password" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleRegisterChange} placeholder="Repite tu contraseña" minLength="8" required />
+              <input id="modal-confirm-password" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleRegisterChange} placeholder="Repite tu contraseña" />
               {fieldErrors.confirmPassword && <small className="register-field-error">{fieldErrors.confirmPassword}</small>}
             </>
           )}

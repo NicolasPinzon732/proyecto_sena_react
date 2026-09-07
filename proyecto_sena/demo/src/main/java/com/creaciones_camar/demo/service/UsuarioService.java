@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.creaciones_camar.demo.model.Usuario;
+import com.creaciones_camar.demo.repository.TipoDocumentoRepository;
 import com.creaciones_camar.demo.repository.UsuarioRepository;
 
 @Service
@@ -18,9 +19,14 @@ public class UsuarioService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private TipoDocumentoRepository tipoDocumentoRepository;
+
     // CREATE
     public Usuario crearUsuario(Usuario usuario) {
+        resolverTipoDocumento(usuario);
         validarUsuario(usuario, true);
+        validarUnicidad(usuario, null);
 
         if (usuario.getRol() == null || usuario.getRol().isBlank()) {
             usuario.setRol("cliente");
@@ -48,7 +54,7 @@ public class UsuarioService {
 
     // READ
     public Optional<Usuario> obtenerPorId(Long id) {
-        return usuarioRepository.findById(id);
+        return usuarioRepository.findById(id).map(this::cargarRolPersistido);
     }
 
     public Optional<Usuario> obtenerPorEmail(String email) {
@@ -70,22 +76,35 @@ public class UsuarioService {
     }
 
     public List<Usuario> obtenerTodos() {
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAll().stream()
+            .map(this::cargarRolPersistido)
+            .toList();
     }
 
     public List<Usuario> obtenerPorRol(String rol) {
         return usuarioRepository.findAll().stream()
-                .filter(usuario -> {
-                    String rolUsuario = obtenerRolPorUsuario(usuario.getId());
-                    return rol.equalsIgnoreCase(rolUsuario == null ? "" : rolUsuario);
-                })
+                .map(this::cargarRolPersistido)
+                .filter(usuario -> rol.equalsIgnoreCase(usuario.getRol()))
                 .toList();
     }
 
     public List<Usuario> obtenerActivos() {
         return usuarioRepository.findAll().stream()
                 .filter(usuario -> usuario.getActivo() == null || usuario.getActivo())
+                .map(this::cargarRolPersistido)
                 .toList();
+    }
+
+    public List<Usuario> obtenerInactivos() {
+        return usuarioRepository.findAll().stream()
+                .filter(usuario -> Boolean.FALSE.equals(usuario.getActivo()))
+                .map(this::cargarRolPersistido)
+                .toList();
+    }
+
+    private Usuario cargarRolPersistido(Usuario usuario) {
+        usuario.setRol(obtenerRolPorUsuario(usuario.getId()));
+        return usuario;
     }
 
     public Optional<Usuario> autenticar(String email, String password) {
@@ -107,9 +126,31 @@ public class UsuarioService {
             if (usuarioActualizado.getEmail() != null) usuario.setEmail(usuarioActualizado.getEmail());
             if (usuarioActualizado.getTelefono() != null) usuario.setTelefono(usuarioActualizado.getTelefono());
             if (usuarioActualizado.getPassword() != null) usuario.setPassword(usuarioActualizado.getPassword());
-            if (usuarioActualizado.getRol() != null) usuario.setRol(usuarioActualizado.getRol());
+            if (usuarioActualizado.getTipoDocumento() != null) {
+                Long tipoId = usuarioActualizado.getTipoDocumento().getIdTipo();
+                if (tipoId == null) {
+                    throw new IllegalArgumentException("El tipo de documento seleccionado no es válido.");
+                }
+                usuario.setTipoDocumento(tipoDocumentoRepository.findById(tipoId)
+                        .orElseThrow(() -> new IllegalArgumentException("El tipo de documento no existe.")));
+            }
+            String rolSolicitado = usuarioActualizado.getRol();
+            if (rolSolicitado != null) {
+                rolSolicitado = rolSolicitado.trim().toLowerCase();
+                if (!List.of("cliente", "empleado", "admin").contains(rolSolicitado)) {
+                    throw new IllegalArgumentException("El rol seleccionado no es válido.");
+                }
+                usuario.setRol(rolSolicitado);
+            }
+            validarUnicidad(usuario, id);
             validarUsuario(usuario, usuarioActualizado.getPassword() != null);
-            return usuarioRepository.save(usuario);
+            Usuario guardado = usuarioRepository.save(usuario);
+            if (rolSolicitado != null) {
+                Integer rolId = jdbcTemplate.queryForObject("SELECT id_rol FROM roles WHERE nombre = ?", Integer.class, rolSolicitado);
+                jdbcTemplate.update("DELETE FROM usuario_roles WHERE usuario_id = ?", guardado.getId());
+                jdbcTemplate.update("INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (?, ?)", guardado.getId(), rolId.longValue());
+            }
+            return guardado;
         }
         return null;
     }
@@ -131,16 +172,17 @@ public class UsuarioService {
             throw new IllegalArgumentException("Ingresa un correo válido.");
         }
 
-        if (usuario.getNuip() == null || !usuario.getNuip().trim().matches("\\d{6,15}")) {
-            throw new IllegalArgumentException("El NUIP debe contener solo números y tener entre 6 y 15 dígitos.");
+        if (usuario.getNuip() == null || !usuario.getNuip().trim().matches("\\d{4,15}")) {
+            throw new IllegalArgumentException("El NUIP debe contener solo números y tener entre 4 y 15 dígitos.");
         }
 
         if (validarPassword && (usuario.getPassword() == null || !usuario.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"))) {
             throw new IllegalArgumentException("La contraseña debe tener mínimo 8 caracteres e incluir mayúscula, minúscula y número.");
         }
 
-        if (usuario.getTelefono() != null && !usuario.getTelefono().trim().matches("\\d{7,15}")) {
-            throw new IllegalArgumentException("El teléfono debe contener solo números y tener mínimo 7 dígitos.");
+        if (usuario.getTelefono() != null && !usuario.getTelefono().trim().isEmpty()
+                && !usuario.getTelefono().trim().matches("\\+?\\d{7,15}")) {
+            throw new IllegalArgumentException("El teléfono debe contener entre 7 y 15 dígitos y puede incluir el prefijo +.");
         }
 
         usuario.setNuip(usuario.getNuip().trim());
@@ -148,8 +190,34 @@ public class UsuarioService {
         usuario.setApellidos(usuario.getApellidos().trim());
         usuario.setEmail(usuario.getEmail().trim().toLowerCase());
         if (usuario.getTelefono() != null) {
-            usuario.setTelefono(usuario.getTelefono().trim());
+            String telefono = usuario.getTelefono().trim();
+            usuario.setTelefono(telefono.isEmpty() ? null : telefono);
         }
+    }
+
+    private void validarUnicidad(Usuario usuario, Long idActual) {
+        usuarioRepository.findByNuip(usuario.getNuip().trim()).ifPresent(otro -> {
+            if (!otro.getId().equals(idActual)) {
+                throw new IllegalArgumentException("El NUIP ya está registrado.");
+            }
+        });
+        usuarioRepository.findByEmail(usuario.getEmail().trim().toLowerCase()).ifPresent(otro -> {
+            if (!otro.getId().equals(idActual)) {
+                throw new IllegalArgumentException("El correo ya está registrado.");
+            }
+        });
+    }
+
+    private void resolverTipoDocumento(Usuario usuario) {
+        if (usuario == null || usuario.getTipoDocumento() == null) {
+            return;
+        }
+        Long tipoId = usuario.getTipoDocumento().getIdTipo();
+        if (tipoId == null) {
+            throw new IllegalArgumentException("El tipo de documento seleccionado no es válido.");
+        }
+        usuario.setTipoDocumento(tipoDocumentoRepository.findById(tipoId)
+                .orElseThrow(() -> new IllegalArgumentException("El tipo de documento no existe.")));
     }
 
     // DELETE

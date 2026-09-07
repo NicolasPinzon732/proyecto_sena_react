@@ -39,7 +39,8 @@ export default function Register() {
     });
     setErrores(validacion);
     if (Object.keys(validacion).length > 0) {
-      setError("Revisa los campos marcados antes de continuar.");
+      const mensaje = Object.values(validacion)[0];
+      setError(mensaje);
       return;
     }
 
@@ -84,7 +85,6 @@ export default function Register() {
                 placeholder="Nombre"
                 value={form.p_nom_usuario}
                 onChange={manejarCambio}
-                required
               />
               {errores.nombres && <small className="register-field-error">{errores.nombres}</small>}
             </div>
@@ -97,7 +97,6 @@ export default function Register() {
                 placeholder="Apellido"
                 value={form.p_ape_usuario}
                 onChange={manejarCambio}
-                required
               />
               {errores.apellidos && <small className="register-field-error">{errores.apellidos}</small>}
             </div>
@@ -112,20 +111,18 @@ export default function Register() {
                 onChange={manejarCambio}
                 maxLength="15"
                 inputMode="numeric"
-                required
               />
               {errores.nuip && <small className="register-field-error">{errores.nuip}</small>}
             </div>
 
             <div className="mb-3">
               <input
-                type="email"
+                type="text"
                 name="correo"
                 className="form-control"
                 placeholder="Correo"
                 value={form.correo}
                 onChange={manejarCambio}
-                required
               />
               {errores.email && <small className="register-field-error">{errores.email}</small>}
             </div>
@@ -150,7 +147,6 @@ export default function Register() {
                 placeholder="Contraseña"
                 value={form.password}
                 onChange={manejarCambio}
-                required
               />
               {errores.password && <small className="register-field-error">{errores.password}</small>}
             </div>
@@ -163,7 +159,6 @@ export default function Register() {
                 placeholder="Confirmar contraseña"
                 value={form.confirmarPassword}
                 onChange={manejarCambio}
-                required
               />
               {errores.confirmPassword && <small className="register-field-error">{errores.confirmPassword}</small>}
             </div>

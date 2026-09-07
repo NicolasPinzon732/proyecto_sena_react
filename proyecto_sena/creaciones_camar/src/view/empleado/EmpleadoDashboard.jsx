@@ -32,19 +32,21 @@ export default function EmpleadoDashboard() {
   return (
     <>
       <HomeNavbar role="empleado" />
-      <div className="dashboard-shell">
-        <div className="dashboard-header">
+      <div className="dashboard-shell admin-dashboard-shell">
+        <div className="dashboard-header dashboard-hero">
           <div>
-            <p className="dashboard-kicker">Panel de empleado</p>
-            <h1>Dashboard</h1>
+            <p className="dashboard-kicker">Creaciones Camar · Operación</p>
+            <h1>Dashboard del empleado</h1>
+            <p className="dashboard-hero-copy">Gestiona pedidos y prepara cada entrega desde un solo lugar.</p>
           </div>
-          <span className="dashboard-badge">Empleado</span>
+          <div className="dashboard-hero-mark" aria-hidden="true"><i className="bi bi-clipboard-check-fill"></i></div>
         </div>
 
       <div className="dashboard-stats row g-4">
         <div className="col-md-6 col-lg-4">
           <div className="dashboard-card stat-card stat-pendientes h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-clock-history"></i></div>
               <h6>Pedidos Pendientes</h6>
               <h2>{stats.pedidosPendientes}</h2>
               <small>Requieren confirmación</small>
@@ -55,6 +57,7 @@ export default function EmpleadoDashboard() {
         <div className="col-md-6 col-lg-4">
           <div className="dashboard-card stat-card stat-envios h-100">
             <div className="card-body">
+              <div className="stat-card-icon"><i className="bi bi-truck"></i></div>
               <h6>Pedidos en Envío</h6>
               <h2>{stats.pedidosEnvio}</h2>
               <small>Listos para despacho</small>
@@ -63,37 +66,25 @@ export default function EmpleadoDashboard() {
         </div>
       </div>
 
-      <div className="row mt-5 g-4">
-        <div className="col-lg-6">
-          <div className="dashboard-card panel-card">
+      <div className="row mt-5 g-4 dashboard-actions-row">
+        <div className="col-12">
+          <div className="dashboard-card panel-card dashboard-actions-card">
             <div className="panel-header">
-              <h6>Acciones rápidas</h6>
-            </div>
-            <div className="card-body">
-              <div className="d-flex flex-column gap-2">
-                <a href="/empleado/pedidos" className="btn btn-main text-start">
-                  <i className="bi bi-bag me-2"></i> Gestionar pedidos
-                </a>
-                <a href="/empleado/envios" className="btn btn-main text-start">
-                  <i className="bi bi-truck me-2"></i> Registrar envíos
-                </a>
+              <div>
+                <p className="dashboard-kicker">Gestiona tu operación</p>
+                <h6>Acciones rápidas</h6>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="col-lg-6">
-          <div className="dashboard-card panel-card">
-            <div className="panel-header">
-              <h6>Información</h6>
-            </div>
-            <div className="card-body">
-              <p className="info-title mb-2">
-                <strong>Rol: Empleado</strong>
-              </p>
-              <p className="info-copy mb-0">
-                Panel para gestión de pedidos y envíos.
-              </p>
+            <div className="card-body dashboard-action-grid">
+              <a href="/empleado/pedidos" className="dashboard-action-link">
+                <i className="bi bi-bag-check-fill"></i><span>Gestionar pedidos</span><i className="bi bi-arrow-up-right"></i>
+              </a>
+              <a href="/empleado/envios" className="dashboard-action-link">
+                <i className="bi bi-truck"></i><span>Registrar envíos</span><i className="bi bi-arrow-up-right"></i>
+              </a>
+              <a href="/perfil" className="dashboard-action-link">
+                <i className="bi bi-person-fill"></i><span>Mi perfil</span><i className="bi bi-arrow-up-right"></i>
+              </a>
             </div>
           </div>
         </div>

@@ -4,6 +4,12 @@ import "../../styles/style_cliente.css";
 import { apiFetch } from "../../utils/api";
 import { agregarAlCarrito } from "../../utils/cart";
 
+function obtenerImagen(imagen) {
+  if (!imagen) return "";
+  if (imagen.startsWith("http")) return imagen;
+  return `http://localhost:8080${imagen.startsWith("/") ? imagen : `/${imagen}`}`;
+}
+
 function formatearPrecio(precio) {
   return new Intl.NumberFormat("es-CO").format(precio);
 }
@@ -94,7 +100,7 @@ export default function DetalleProducto() {
       <div className="detalle-grid">
         <div className="detalle-img-wrap">
           {producto.imagen ? (
-            <img src={`http://localhost:8000${producto.imagen}`} alt={producto.nombre} />
+            <img src={obtenerImagen(producto.imagen)} alt={producto.nombre} />
           ) : (
             <div className="detalle-img-placeholder"><i className="bi bi-image"></i></div>
           )}

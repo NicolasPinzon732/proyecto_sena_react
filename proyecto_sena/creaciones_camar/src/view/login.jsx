@@ -15,6 +15,16 @@ function Login() {
         setError("");
         setSuccess("");
 
+        if (!correo.trim() || !contraseña) {
+            setError("El correo y la contraseña son obligatorios");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) {
+            setError("Correo o contraseña incorrectos");
+            return;
+        }
+
         try {
             const response = await fetch("http://localhost:8000/login", {
                 method: "POST",
@@ -66,13 +76,13 @@ function Login() {
                     </h5>
 
                     {success && (
-                        <div className="alert alert-success">
+                        <div className="app-validation-alert alert alert-success">
                             {success}
                         </div>
                     )}
 
                     {error && (
-                        <div className="alert alert-danger">
+                        <div className="app-validation-alert alert alert-danger">
                             {error}
                         </div>
                     )}
@@ -81,13 +91,12 @@ function Login() {
 
                         <div className="mb-3">
                             <input
-                                type="email"
+                                type="text"
                                 name="correo"
                                 className="form-control"
                                 placeholder="Correo"
                                 value={correo}
                                 onChange={(e) => setCorreo(e.target.value)}
-                                required
                             />
                         </div>
 
@@ -99,7 +108,6 @@ function Login() {
                                 placeholder="Contraseña"
                                 value={contraseña}
                                 onChange={(e) => setContraseña(e.target.value)}
-                                required
                             />
                         </div>
 

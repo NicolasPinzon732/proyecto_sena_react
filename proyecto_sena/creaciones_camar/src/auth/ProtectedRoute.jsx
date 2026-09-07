@@ -18,9 +18,11 @@ export const ProtectedRoute = ({ children, requiredRol }) => {
 
   const usuarioObj = JSON.parse(usuarioJson);
   const rolActual = String(usuarioObj.rol || '').toLowerCase();
-  const rolRequerido = String(requiredRol || '').toLowerCase();
+  const rolesPermitidos = Array.isArray(requiredRol)
+    ? requiredRol.map((rol) => String(rol).toLowerCase())
+    : [String(requiredRol || '').toLowerCase()];
 
-  if (requiredRol && rolActual !== rolRequerido) {
+  if (requiredRol && !rolesPermitidos.includes(rolActual)) {
     navigate(getHomeRouteByRole(usuarioObj.rol));
     return null;
   }

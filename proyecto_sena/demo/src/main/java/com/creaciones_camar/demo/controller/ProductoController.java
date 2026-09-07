@@ -5,7 +5,18 @@ import com.creaciones_camar.demo.service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,8 +24,57 @@ import java.util.Optional;
 @RequestMapping("/api/productos")
 @CrossOrigin(origins = "*")
 public class ProductoController {
+    private static final Path DIRECTORIO_IMAGENES = Paths.get("uploads", "productos").toAbsolutePath().normalize();
+
     @Autowired
     private ProductoService productoService;
+
+    @PostMapping("/imagenes")
+    public ResponseEntity<Map<String, String>> subirImagen(@RequestParam("imagen") MultipartFile imagen) {
+        if (imagen == null || imagen.isEmpty()) {
+            throw new IllegalArgumentException("Selecciona una imagen.");
+        }
+        if (imagen.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("La imagen no puede superar los 5 MB.");
+        }
+
+        String tipoContenido = imagen.getContentType() == null ? "" : imagen.getContentType().toLowerCase();
+        if (!Set.of("image/jpeg", "image/png", "image/webp", "image/gif").contains(tipoContenido)) {
+            throw new IllegalArgumentException("Solo se permiten imágenes JPG, PNG, WEBP o GIF.");
+        }
+
+        try {
+            Files.createDirectories(DIRECTORIO_IMAGENES);
+            String extension = switch (tipoContenido) {
+                case "image/png" -> ".png";
+                case "image/webp" -> ".webp";
+                case "image/gif" -> ".gif";
+                default -> ".jpg";
+            };
+            String nombreArchivo = UUID.randomUUID() + extension;
+            Files.copy(imagen.getInputStream(), DIRECTORIO_IMAGENES.resolve(nombreArchivo));
+            return ResponseEntity.ok(Map.of("url", "/api/productos/imagenes/" + nombreArchivo));
+        } catch (IOException exception) {
+            throw new IllegalStateException("No se pudo guardar la imagen.", exception);
+        }
+    }
+
+    @GetMapping("/imagenes/{nombreArchivo:.+}")
+    public ResponseEntity<Resource> obtenerImagen(@PathVariable String nombreArchivo) {
+        Path archivo = DIRECTORIO_IMAGENES.resolve(nombreArchivo).normalize();
+        if (!archivo.getParent().equals(DIRECTORIO_IMAGENES) || !Files.exists(archivo)) {
+            return ResponseEntity.notFound().build();
+        }
+        Resource recurso = new FileSystemResource(archivo);
+        String tipo = "image/jpeg";
+        try {
+            String detectado = Files.probeContentType(archivo);
+            if (detectado != null) tipo = detectado;
+        } catch (IOException ignored) {
+            // Usa JPEG como tipo predeterminado si el sistema no detecta el archivo.
+        }
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(tipo)).body(recurso);
+    }
 
     @PostMapping
     public ResponseEntity<Producto> crearProducto(@RequestBody Producto producto) {
@@ -80,5 +140,15 @@ public class ProductoController {
     public ResponseEntity<Void> desactivarProducto(@PathVariable Long id) {
         productoService.desactivarProducto(id);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<java.util.Map<String, String>> manejarValidacion(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(java.util.Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<java.util.Map<String, String>> manejarCarga(IllegalStateException exception) {
+        return ResponseEntity.internalServerError().body(java.util.Map.of("message", exception.getMessage()));
     }
 }

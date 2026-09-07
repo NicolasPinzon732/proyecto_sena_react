@@ -4,9 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
 import { validarRegistroCompleto } from '../../utils/validacionesRegistro';
 
-export default function UsuarioForm() {
+export default function UsuarioForm({ self = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const usuarioSesion = JSON.parse(localStorage.getItem('user') || localStorage.getItem('usuario') || '{}');
+  const usuarioId = self ? usuarioSesion.id : id;
+  const rolSesion = String(usuarioSesion.rol || 'cliente').toLowerCase();
   const [formData, setFormData] = useState({
     idUsuario: '',
     tipoDocumento: { idTipo: '' },
@@ -20,7 +23,8 @@ export default function UsuarioForm() {
   });
   const [tiposDocumento, setTiposDocumento] = useState([]);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(id ? true : false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(usuarioId ? true : false);
 
   useEffect(() => {
     const fetchTiposDocumento = async () => {
@@ -34,9 +38,9 @@ export default function UsuarioForm() {
     };
 
     const fetchUsuario = async () => {
-      if (id) {
+      if (usuarioId) {
         try {
-          const response = await fetch(`http://localhost:8080/api/usuarios/${id}`);
+          const response = await fetch(`http://localhost:8080/api/usuarios/${usuarioId}`);
           const data = await response.json();
           setFormData(data);
         } catch (error) {
@@ -49,18 +53,21 @@ export default function UsuarioForm() {
 
     fetchTiposDocumento();
     fetchUsuario();
-  }, [id]);
+  }, [usuarioId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'tipoDocumento'
+        ? { ...(prev.tipoDocumento || {}), idTipo: value ? Number(value) : '' }
+        : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
     const errores = validarRegistroCompleto({
       nombres: formData.nombres,
@@ -68,8 +75,8 @@ export default function UsuarioForm() {
       nuip: formData.nuip,
       email: formData.email,
       telefono: formData.telefono,
-      password: formData.password || 'Password123',
-      confirmPassword: formData.password || 'Password123',
+      password: usuarioId ? (formData.password || 'Password123') : formData.password,
+      confirmPassword: usuarioId ? (formData.password || 'Password123') : formData.password,
     });
 
     if (!formData.nuip) {
@@ -79,29 +86,42 @@ export default function UsuarioForm() {
     if (!formData.email || !formData.email.includes('@')) {
       errores.email = 'Ingresa un correo válido con formato usuario@dominio.com.';
     }
+    if (!formData.tipoDocumento?.idTipo) {
+      errores.tipoDocumento = 'Selecciona un tipo de documento.';
+    }
 
     setErrors(errores);
     if (Object.keys(errores).length > 0) {
+      setError(Object.values(errores)[0]);
       return;
     }
 
     try {
-      const method = id ? 'PUT' : 'POST';
-      const url = id
-        ? `http://localhost:8080/api/usuarios/${id}`
+      const method = usuarioId ? 'PUT' : 'POST';
+      const url = usuarioId
+        ? `http://localhost:8080/api/usuarios/${usuarioId}`
         : 'http://localhost:8080/api/usuarios';
 
+      const datosUsuario = Object.fromEntries(
+        Object.entries(formData).filter(([campo]) => (
+          (!usuarioId || formData.password || campo !== 'password')
+          && (!self || campo !== 'rol')
+        ))
+      );
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(datosUsuario),
       });
 
-      if (response.ok) {
-        navigate('/admin/usuarios');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'No se pudo guardar el usuario.');
       }
+      navigate(self ? (rolSesion === 'admin' ? '/admin' : '/empleado') : '/admin/usuarios');
     } catch (error) {
       console.error('Error al guardar usuario:', error);
+      setError(error.message || 'No se pudo guardar el usuario.');
     }
   };
 
@@ -111,17 +131,19 @@ export default function UsuarioForm() {
 
   return (
     <>
-      <HomeNavbar role="admin" />
+      <HomeNavbar role={rolSesion === 'empleado' ? 'empleado' : 'admin'} />
       <div className="dashboard-shell admin-form-shell">
       <div className="dashboard-header admin-list-header admin-form-header">
         <div>
-          <p className="dashboard-kicker">Panel administrativo · Usuarios</p>
-          <h1>{id ? 'Editar usuario' : 'Nuevo usuario'}</h1>
+          <p className="dashboard-kicker">{rolSesion === 'empleado' ? 'Panel operativo · Empleado' : 'Panel administrativo · Usuarios'}</p>
+          <h1>{self ? 'Mi perfil' : usuarioId ? 'Editar usuario' : 'Nuevo usuario'}</h1>
           <p className="text-muted small mb-0">Completa la información del usuario</p>
         </div>
-        <a href="/admin/usuarios" className="admin-secondary-button">
-          <i className="bi bi-arrow-left me-1"></i> Volver
-        </a>
+        {(!self || rolSesion === 'admin') && (
+          <a href={self ? '/admin' : '/admin/usuarios'} className="admin-secondary-button">
+            <i className="bi bi-arrow-left me-1"></i> Volver
+          </a>
+        )}
       </div>
 
       <div className="card card-custom admin-form-card">
@@ -133,18 +155,28 @@ export default function UsuarioForm() {
           </div>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="row g-3">
-            <div className="col-12 col-md-6">
-              <label className="form-label">ID de usuario</label>
-              <input
-                type="text"
-                name="idUsuario"
-                className="form-control"
-                value={formData.idUsuario}
-                onChange={handleChange}
-                required
-              />
+          {error && (
+            <div className="app-validation-alert alert alert-danger mb-4" role="alert">
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {error}
             </div>
+          )}
+          <div className="row g-3">
+            {!usuarioId && (
+              <div className="col-12 col-md-6">
+                <label className="form-label">NUIP</label>
+                <input
+                  type="text"
+                  name="nuip"
+                  className="form-control"
+                  value={formData.nuip}
+                  onChange={handleChange}
+                  maxLength="15"
+                  inputMode="numeric"
+                />
+                {errors.nuip && <small className="register-field-error">{errors.nuip}</small>}
+              </div>
+            )}
 
             <div className="col-12 col-md-6">
               <label className="form-label">Tipo de documento</label>
@@ -153,7 +185,6 @@ export default function UsuarioForm() {
                 className="form-select"
                 value={formData.tipoDocumento?.idTipo || ''}
                 onChange={handleChange}
-                required
               >
                 <option value="">Selecciona tipo de documento</option>
                 {tiposDocumento.map((tipo) => (
@@ -162,6 +193,7 @@ export default function UsuarioForm() {
                   </option>
                 ))}
               </select>
+              {errors.tipoDocumento && <small className="register-field-error">{errors.tipoDocumento}</small>}
             </div>
 
             <div className="col-12 col-md-6">
@@ -172,8 +204,8 @@ export default function UsuarioForm() {
                 className="form-control"
                 value={formData.nombres}
                 onChange={handleChange}
-                required
               />
+              {errors.nombres && <small className="register-field-error">{errors.nombres}</small>}
             </div>
 
             <div className="col-12 col-md-6">
@@ -184,35 +216,34 @@ export default function UsuarioForm() {
                 className="form-control"
                 value={formData.apellidos}
                 onChange={handleChange}
-                required
               />
               {errors.apellidos && <small className="register-field-error">{errors.apellidos}</small>}
             </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">NUIP</label>
-              <input
-                type="text"
-                name="nuip"
-                className="form-control"
-                value={formData.nuip}
-                onChange={handleChange}
-                maxLength="15"
-                inputMode="numeric"
-                required
-              />
-              {errors.nuip && <small className="register-field-error">{errors.nuip}</small>}
-            </div>
+            {id && (
+              <div className="col-12 col-md-6">
+                <label className="form-label">NUIP</label>
+                <input
+                  type="text"
+                  name="nuip"
+                  className="form-control"
+                  value={formData.nuip}
+                  onChange={handleChange}
+                  maxLength="15"
+                  inputMode="numeric"
+                />
+                {errors.nuip && <small className="register-field-error">{errors.nuip}</small>}
+              </div>
+            )}
 
             <div className="col-12 col-md-6">
               <label className="form-label">Email</label>
               <input
-                type="email"
+                type="text"
                 name="email"
                 className="form-control"
                 value={formData.email}
                 onChange={handleChange}
-                required
               />
               {errors.email && <small className="register-field-error">{errors.email}</small>}
             </div>
@@ -225,26 +256,27 @@ export default function UsuarioForm() {
                 className="form-control"
                 value={formData.telefono}
                 onChange={handleChange}
-                required
               />
               {errors.telefono && <small className="register-field-error">{errors.telefono}</small>}
             </div>
 
-            <div className="col-12 col-md-6">
-              <label className="form-label">Rol</label>
-              <select
-                name="rol"
-                className="form-select"
-                value={formData.rol}
-                onChange={handleChange}
-              >
-                <option value="cliente">Cliente</option>
-                <option value="admin">Administrador</option>
-                <option value="empleado">Empleado</option>
-              </select>
-            </div>
+            {!self && (
+              <div className="col-12 col-md-6">
+                <label className="form-label">Rol</label>
+                <select
+                  name="rol"
+                  className="form-select"
+                  value={formData.rol}
+                  onChange={handleChange}
+                >
+                  <option value="cliente">Cliente</option>
+                  <option value="admin">Administrador</option>
+                  <option value="empleado">Empleado</option>
+                </select>
+              </div>
+            )}
 
-            {!id && (
+            {(!usuarioId || self) && (
               <div className="col-12 col-md-6">
                 <label className="form-label">Contraseña</label>
                 <input
@@ -253,14 +285,14 @@ export default function UsuarioForm() {
                   className="form-control"
                   value={formData.password}
                   onChange={handleChange}
-                  required
                 />
+                  {errors.password && <small className="register-field-error">{errors.password}</small>}
               </div>
             )}
           </div>
 
           <div className="admin-form-actions">
-            <a href="/admin/usuarios" className="admin-secondary-button">
+            <a href={self ? (rolSesion === 'admin' ? '/admin' : '/empleado') : '/admin/usuarios'} className="admin-secondary-button">
               Cancelar
             </a>
             <button type="submit" className="admin-primary-button">

@@ -67,4 +67,23 @@ public class PedidoController {
         pedidoService.cambiarEstado(id, estado);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<Pedido> cancelarPedido(@PathVariable Long id, @RequestBody java.util.Map<String, Long> datos) {
+        Long usuarioId = datos == null ? null : datos.get("usuarioId");
+        if (usuarioId == null) {
+            throw new IllegalArgumentException("El usuario del pedido es obligatorio");
+        }
+        return ResponseEntity.ok(pedidoService.cancelarPedido(id, usuarioId));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<java.util.Map<String, String>> manejarValidacion(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(java.util.Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<java.util.Map<String, String>> manejarStock(IllegalStateException exception) {
+        return ResponseEntity.badRequest().body(java.util.Map.of("message", exception.getMessage()));
+    }
 }

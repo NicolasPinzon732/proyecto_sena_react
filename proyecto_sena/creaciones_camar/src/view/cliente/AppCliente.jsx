@@ -25,6 +25,7 @@ export default function AppCliente() {
   const [passwordNueva, setPasswordNueva] = useState("");
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [erroresPerfil, setErroresPerfil] = useState({});
+  const [errorPerfil, setErrorPerfil] = useState("");
   const [confirmarSalida, setConfirmarSalida] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [cartCount, setCartCount] = useState(obtenerCantidadCarrito());
@@ -83,6 +84,7 @@ export default function AppCliente() {
 
   async function guardarCambios(e) {
     e.preventDefault();
+    setErrorPerfil("");
     const errores = {};
     ["nombres", "apellidos", "email", "telefono"].forEach((campo) => {
       const error = validarCampoRegistro(campo, usuario[campo] || "");
@@ -94,7 +96,10 @@ export default function AppCliente() {
     if (passwordNueva && passwordNueva !== confirmarPassword) errores.confirmarPassword = "Las contraseñas no coinciden.";
 
     setErroresPerfil(errores);
-    if (Object.keys(errores).length) return;
+    if (Object.keys(errores).length) {
+      setErrorPerfil(Object.values(errores)[0]);
+      return;
+    }
 
     setGuardando(true);
     try {
@@ -119,8 +124,9 @@ export default function AppCliente() {
       setModalAbierto(false);
       setCampoEditable(null);
       setErroresPerfil({});
+      setErrorPerfil("");
     } catch (error) {
-      alert(error.message);
+      setErrorPerfil(error.message || "No se pudieron guardar los cambios.");
     } finally {
       setGuardando(false);
     }
@@ -143,53 +149,28 @@ export default function AppCliente() {
     <>
       <nav className="navbar-cliente">
         <div className="nav-brand">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            className="brand-logo"
-          />
+          <img src="/logo.png" alt="Logo" className="brand-logo" />
           <span className="brand-name">Creaciones Camar</span>
         </div>
 
         <div className="nav-links">
-          <Link
-            to="/cliente/catalogo"
-            className={`nav-link-item ${enCatalogo ? "active" : ""}`}
-          >
+          <Link to="/cliente/catalogo" className={`nav-link-item ${enCatalogo ? "active" : ""}`}>
             Catálogo
           </Link>
-          <Link
-            to="/cliente/pedidos"
-            className={`nav-link-item ${enPedidos ? "active" : ""}`}
-          >
+          <Link to="/cliente/pedidos" className={`nav-link-item ${enPedidos ? "active" : ""}`}>
             Mis pedidos
           </Link>
         </div>
 
         <div className="nav-actions">
-          <Link
-            to="/cliente/carrito"
-            className={`nav-icon-btn ${enCarrito ? "active" : ""}`}
-            title="Carrito"
-          >
+          <Link to="/cliente/carrito" className={`nav-icon-btn ${enCarrito ? "active" : ""}`} title="Carrito">
             <i className="bi bi-cart3"></i>
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </Link>
-
-          <button
-            className="nav-icon-btn"
-            onClick={() => setModalAbierto(true)}
-            title="Perfil"
-          >
+          <button className="nav-icon-btn" onClick={() => setModalAbierto(true)} title="Perfil">
             <i className="bi bi-person-circle"></i>
           </button>
-
-          <button
-            className="nav-icon-btn"
-            onClick={cerrarSesion}
-            title="Cerrar sesión"
-            style={{ background: "none", border: "none" }}
-          >
+          <button className="nav-icon-btn" onClick={cerrarSesion} title="Cerrar sesión" style={{ background: "none", border: "none" }}>
             <i className="bi bi-box-arrow-right"></i>
           </button>
         </div>
@@ -211,6 +192,13 @@ export default function AppCliente() {
           <p className="profile-kicker">Mi cuenta</p>
           <h5 className="modal-user-title" id="perfil-titulo">Datos del usuario</h5>
           <p className="profile-intro">Actualiza tus datos personales de forma segura.</p>
+
+          {errorPerfil && (
+            <div className="app-validation-alert alert alert-danger" role="alert">
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {errorPerfil}
+            </div>
+          )}
 
           <form onSubmit={guardarCambios}>
             <div className="user-field-group">

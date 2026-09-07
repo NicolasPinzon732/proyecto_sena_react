@@ -14,7 +14,13 @@ export default function Login() {
     setError("");
 
     if (!correo || !contrasena) {
-      setError("Correo y contraseña son obligatorios.");
+      const mensaje = "Correo y contraseña son obligatorios.";
+      setError(mensaje);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) {
+      setError("Correo o contraseña incorrectos.");
       return;
     }
 
@@ -53,17 +59,16 @@ export default function Login() {
         <div className="card login-card text-center">
           <h5 className="mb-4">Inicia sesión en Creaciones Camar</h5>
 
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && <div className="app-validation-alert alert alert-danger">{error}</div>}
 
           <form onSubmit={manejarSubmit}>
             <div className="mb-3">
               <input
-                type="email"
+                type="text"
                 className="form-control"
                 placeholder="Correo"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
-                required
               />
             </div>
 
@@ -74,7 +79,6 @@ export default function Login() {
                 placeholder="Contraseña"
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
-                required
               />
             </div>
 

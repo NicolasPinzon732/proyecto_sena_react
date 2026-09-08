@@ -24,7 +24,6 @@ export default function UsuarioForm({ self = false }) {
   const [tiposDocumento, setTiposDocumento] = useState([]);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(usuarioId ? true : false);
 
   useEffect(() => {
     const fetchTiposDocumento = async () => {
@@ -45,8 +44,6 @@ export default function UsuarioForm({ self = false }) {
           setFormData(data);
         } catch (error) {
           console.error('Error al cargar usuario:', error);
-        } finally {
-          setLoading(false);
         }
       }
     };
@@ -124,10 +121,6 @@ export default function UsuarioForm({ self = false }) {
       setError(error.message || 'No se pudo guardar el usuario.');
     }
   };
-
-  if (loading) {
-    return <div className="text-center mt-5"><p>Cargando...</p></div>;
-  }
 
   return (
     <>

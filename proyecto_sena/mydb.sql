@@ -39,9 +39,12 @@ CREATE TABLE `categorias` (
 --
 
 INSERT INTO `categorias` (`id_categoria`, `tipo_categoria`, `descripcion`, `activo`) VALUES
-(1, 'Chaquetas', 'Prendas de abrigo y estilo moderno', 1),
-(2, 'Pantalones', 'Pantalones casuales y formales', 1),
-(3, 'Accesorios', 'Accesorios complementarios', 1);
+(1, 'Chaqueta de cuero', 'Chaquetas premium en cuero genuino', 1),
+(2, 'Impermeables', 'Chaquetas resistentes al agua y clima extremo', 1),
+(3, 'Acolchonadas', 'Chaquetas acolchadas para frío y abrigo', 1),
+(4, 'Deportivas', 'Chaquetas cómodas para movimiento y estilo casual', 1),
+(5, 'De denim', 'Chaquetas tipo jean con estilo versátil', 1)
+ON DUPLICATE KEY UPDATE `descripcion` = VALUES(`descripcion`), `activo` = VALUES(`activo`);
 
 -- --------------------------------------------------------
 
@@ -119,9 +122,11 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `nombre`, `descripcion`, `descripcion_corta`, `precio`, `stock_total`, `imagen`, `categoria_id`, `tallas`, `activo`) VALUES
-(1, 'Chaqueta de queso', 'Chaqueta moderna para uso diario', 'Ideal para clima fresco', 189000.00, 20, NULL, 1, 'S,M,L,XL', 1),
-(2, 'Pantalón Clásico', 'Pantalón cómodo y elegante', 'Versátil para cualquier ocasión', 129000.00, 30, NULL, 2, 'S,M,L,XL', 1),
-(3, 'Cinturón Premium', 'Accesorio de alta calidad', 'Detalle final para cada outfit', 45000.00, 50, NULL, 3, 'Única', 1);
+(1, 'Chaqueta de Cuero Clásica', 'Chaqueta premium de cuero genuino con acabados refinados', 'Estilo premium para uso diario y eventos', 289000.00, 18, NULL, 1, 'S,M,L,XL', 1),
+(2, 'Impermeable Storm Pro', 'Chaqueta resistente al agua con diseño funcional y moderno', 'Ideal para lluvia y clima cambiante', 249000.00, 16, NULL, 2, 'S,M,L,XL', 1),
+(3, 'Chaqueta Acolchonada Nova', 'Chaqueta acolchada para máximo abrigo sin perder estilo', 'Calidez y confort para días fríos', 265000.00, 14, NULL, 3, 'S,M,L,XL', 1),
+(4, 'Chaqueta Deportiva Run', 'Chaqueta deportiva ligera, cómoda y versátil', 'Perfecta para actividades y uso casual', 199000.00, 20, NULL, 4, 'S,M,L,XL', 1),
+(5, 'Chaqueta Denim Urban', 'Chaqueta tipo denim con estilo casual e industrial', 'Un clásico renovado para cada outfit', 219000.00, 17, NULL, 5, 'S,M,L,XL', 1);
 
 -- --------------------------------------------------------
 

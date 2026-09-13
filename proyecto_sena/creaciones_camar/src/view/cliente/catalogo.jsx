@@ -17,6 +17,21 @@ function obtenerImagen(imagen) {
   return `http://localhost:8080${imagen.startsWith("/") ? imagen : `/${imagen}`}`;
 }
 
+const CATEGORIAS_PERMITIDAS = [
+  "Cuero",
+  "Chaqueta de cuero",
+  "Impermeables",
+  "Acolchonadas",
+  "Deportivas",
+  "Demin",
+  "De denim",
+  "De demin",
+  "denim",
+  "de denim",
+  "demin",
+  "cuero"
+];
+
 export default function Catalogo() {
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -31,7 +46,13 @@ export default function Catalogo() {
       .finally(() => setCargando(false));
   }, []);
 
-  const categorias = [...new Set(productos.map((p) => p.categoria?.tipoCategoria || p.categoria).filter(Boolean))];
+  const categorias = [...new Set(
+    productos
+      .map((p) => p.categoria?.tipoCategoria || p.categoria)
+      .filter((categoria) => categoria && CATEGORIAS_PERMITIDAS.includes(String(categoria).trim()))
+  )];
+
+  const categoriaActivaValida = categorias.includes(categoriaActiva) ? categoriaActiva : "";
 
   function obtenerStock(producto) {
     if (typeof producto.tallas === "string") {
@@ -47,10 +68,10 @@ export default function Catalogo() {
 
   const productosFiltrados = productos.filter((producto) => {
     const nombre = obtenerNombre(producto).toLowerCase();
-    const categoriaProducto = producto.categoria?.tipoCategoria || producto.categoria || "";
+    const categoriaProducto = String(producto.categoria?.tipoCategoria || producto.categoria || "").trim();
     const coincideTexto = nombre.includes(busqueda.toLowerCase());
-    const coincideCategoria = !categoriaActiva || categoriaProducto === categoriaActiva;
-    return coincideTexto && coincideCategoria;
+    const coincideCategoria = !categoriaActivaValida || categoriaProducto === categoriaActivaValida;
+    return coincideTexto && coincideCategoria && CATEGORIAS_PERMITIDAS.includes(categoriaProducto);
   });
 
   return (
@@ -82,9 +103,9 @@ export default function Catalogo() {
           </div>
 
           <div className="filter-pills">
-            <button className={`pill ${categoriaActiva === "" ? "active" : ""}`} onClick={() => setCategoriaActiva("")}>Todas</button>
+            <button className={`pill ${categoriaActivaValida === "" ? "active" : ""}`} onClick={() => setCategoriaActiva("")}>Todas</button>
             {categorias.map((cat) => (
-              <button key={cat} className={`pill ${categoriaActiva === cat ? "active" : ""}`} onClick={() => setCategoriaActiva(cat)}>{cat}</button>
+              <button key={cat} className={`pill ${categoriaActivaValida === cat ? "active" : ""}`} onClick={() => setCategoriaActiva(cat)}>{cat}</button>
             ))}
           </div>
         </div>

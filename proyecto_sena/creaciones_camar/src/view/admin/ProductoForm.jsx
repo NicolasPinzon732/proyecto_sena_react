@@ -3,6 +3,21 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
 
+const CATEGORIAS_PERMITIDAS = [
+  "Cuero",
+  "Chaqueta de cuero",
+  "Impermeables",
+  "Acolchonadas",
+  "Deportivas",
+  "Demin",
+  "De denim",
+  "De demin",
+  "denim",
+  "de denim",
+  "demin",
+  "cuero"
+];
+
 function obtenerTallas(valor, stockTotal) {
   try {
     const tallas = JSON.parse(valor || '[]');
@@ -42,7 +57,10 @@ export default function ProductoForm() {
       try {
         const catRes = await fetch('http://localhost:8080/api/categorias/activas');
         const categoriasList = await catRes.json();
-        setCategorias(categoriasList);
+        const categoriasValidas = (Array.isArray(categoriasList) ? categoriasList : []).filter((cat) =>
+          CATEGORIAS_PERMITIDAS.includes(String(cat.tipoCategoria || '').trim())
+        );
+        setCategorias(categoriasValidas);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       }

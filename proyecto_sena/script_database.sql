@@ -244,9 +244,12 @@ SELECT ciudad.nombre, pais.id_pais FROM (
 ) ciudad JOIN paises pais ON pais.nombre = ciudad.pais;
 INSERT INTO metodos_pago (nombre) VALUES ('Nequi'), ('Daviplata'), ('Transferencia Bancaria'), ('PayPal'), ('Mercado Pago');
 INSERT INTO categorias (tipo_categoria, descripcion) VALUES
-    ('Chaquetas', 'Prendas de abrigo y estilo moderno'),
-    ('Pantalones', 'Pantalones casuales y formales'),
-    ('Accesorios', 'Accesorios complementarios');
+    ('Chaqueta de cuero', 'Chaquetas premium en cuero genuino'),
+    ('Impermeables', 'Chaquetas resistentes al agua y clima extremo'),
+    ('Acolchonadas', 'Chaquetas acolchadas para frío y abrigo'),
+    ('Deportivas', 'Chaquetas cómodas para movimiento y estilo casual'),
+    ('De denim', 'Chaquetas tipo jean con estilo versátil')
+ON DUPLICATE KEY UPDATE descripcion = VALUES(descripcion), activo = 1;
 
 INSERT INTO usuarios (nombres, apellidos, nuip, email, telefono, password, activo, tipo_documento_id) VALUES
     ('Admin', 'Sistema', '1000000001', 'admin@creacionescamar.com', '3000000000', 'admin123', 1,
@@ -267,25 +270,42 @@ SELECT u.id_usuario, r.id_rol FROM usuarios u JOIN roles r ON r.nombre = 'client
 WHERE u.email = 'cliente@creacionescamar.com';
 
 INSERT INTO productos (nombre, descripcion, descripcion_corta, precio, stock_total, categoria_id, tallas, activo) VALUES
-    ('Chaqueta Urbana', 'Chaqueta moderna para uso diario', 'Ideal para clima fresco', 189000.00, 20,
-        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Chaquetas'),
-        '[{"talla":"S","cantidad":5},{"talla":"M","cantidad":8},{"talla":"L","cantidad":5},{"talla":"XL","cantidad":2}]', 1),
-    ('Pantalón Clásico', 'Pantalón cómodo y elegante', 'Versátil para cualquier ocasión', 129000.00, 12,
-        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Pantalones'),
-        '[{"talla":"S","cantidad":3},{"talla":"M","cantidad":4},{"talla":"L","cantidad":3},{"talla":"XL","cantidad":2}]', 1),
-    ('Cinturón Premium', 'Accesorio de alta calidad', 'Detalle final para cada outfit', 45000.00, 10,
-        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Accesorios'),
-        '[{"talla":"Única","cantidad":10}]', 1);
+    ('Chaqueta de Cuero Clásica', 'Chaqueta premium de cuero genuino con acabados refinados', 'Estilo premium para uso diario y eventos', 289000.00, 18,
+        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Chaqueta de cuero'),
+        '[{"talla":"S","cantidad":4},{"talla":"M","cantidad":6},{"talla":"L","cantidad":5},{"talla":"XL","cantidad":3}]', 1),
+    ('Impermeable Storm Pro', 'Chaqueta resistente al agua con diseño funcional y moderno', 'Ideal para lluvia y clima cambiante', 249000.00, 16,
+        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Impermeables'),
+        '[{"talla":"S","cantidad":3},{"talla":"M","cantidad":5},{"talla":"L","cantidad":4},{"talla":"XL","cantidad":4}]', 1),
+    ('Chaqueta Acolchonada Nova', 'Chaqueta acolchada para máximo abrigo sin perder estilo', 'Calidez y confort para días fríos', 265000.00, 14,
+        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Acolchonadas'),
+        '[{"talla":"S","cantidad":3},{"talla":"M","cantidad":4},{"talla":"L","cantidad":4},{"talla":"XL","cantidad":3}]', 1),
+    ('Chaqueta Deportiva Run', 'Chaqueta deportiva ligera, cómoda y versátil', 'Perfecta para actividades y uso casual', 199000.00, 20,
+        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'Deportivas'),
+        '[{"talla":"S","cantidad":5},{"talla":"M","cantidad":7},{"talla":"L","cantidad":5},{"talla":"XL","cantidad":3}]', 1),
+    ('Chaqueta Denim Urban', 'Chaqueta tipo denim con estilo casual e industrial', 'Un clásico renovado para cada outfit', 219000.00, 17,
+        (SELECT id_categoria FROM categorias WHERE tipo_categoria = 'De denim'),
+        '[{"talla":"S","cantidad":4},{"talla":"M","cantidad":5},{"talla":"L","cantidad":4},{"talla":"XL","cantidad":4}]', 1);
 
 INSERT INTO producto_tallas (producto_id, talla_id, cantidad)
-SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Chaqueta Urbana'
-UNION ALL SELECT p.id_producto, t.id_talla, 8 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Chaqueta Urbana'
-UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Chaqueta Urbana'
-UNION ALL SELECT p.id_producto, t.id_talla, 2 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Chaqueta Urbana'
-UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Pantalón Clásico'
-UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Pantalón Clásico'
-UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Pantalón Clásico'
-UNION ALL SELECT p.id_producto, t.id_talla, 2 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Pantalón Clásico'
-UNION ALL SELECT p.id_producto, t.id_talla, 10 FROM productos p JOIN tallas t ON t.nombre = 'Única' WHERE p.nombre = 'Cinturón Premium';
+SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Chaqueta de Cuero Clásica'
+UNION ALL SELECT p.id_producto, t.id_talla, 6 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Chaqueta de Cuero Clásica'
+UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Chaqueta de Cuero Clásica'
+UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Chaqueta de Cuero Clásica'
+UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Impermeable Storm Pro'
+UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Impermeable Storm Pro'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Impermeable Storm Pro'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Impermeable Storm Pro'
+UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Chaqueta Acolchonada Nova'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Chaqueta Acolchonada Nova'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Chaqueta Acolchonada Nova'
+UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Chaqueta Acolchonada Nova'
+UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Chaqueta Deportiva Run'
+UNION ALL SELECT p.id_producto, t.id_talla, 7 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Chaqueta Deportiva Run'
+UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Chaqueta Deportiva Run'
+UNION ALL SELECT p.id_producto, t.id_talla, 3 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Chaqueta Deportiva Run'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'S' WHERE p.nombre = 'Chaqueta Denim Urban'
+UNION ALL SELECT p.id_producto, t.id_talla, 5 FROM productos p JOIN tallas t ON t.nombre = 'M' WHERE p.nombre = 'Chaqueta Denim Urban'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'L' WHERE p.nombre = 'Chaqueta Denim Urban'
+UNION ALL SELECT p.id_producto, t.id_talla, 4 FROM productos p JOIN tallas t ON t.nombre = 'XL' WHERE p.nombre = 'Chaqueta Denim Urban';
 
 SELECT 'Esquema de mydb creado correctamente.' AS estado;

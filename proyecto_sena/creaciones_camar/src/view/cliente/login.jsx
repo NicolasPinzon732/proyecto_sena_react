@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../utils/api";
+import { esEmailValido } from "../utils/validacionesRegistro";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function Login() {
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) {
+    if (!esEmailValido(correo)) {
       setError("Correo o contraseña incorrectos.");
       return;
     }

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import HomeNavbar from '../shared/HomeNavbar';
+import { apiFetch, validarIdApi, validarOpcionApi } from '../../utils/api';
+
+const ESTADOS_PERMITIDOS = ['pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado'];
 
 export default function PedidosEmpleado() {
   const [pedidos, setPedidos] = useState([]);
@@ -10,11 +13,8 @@ export default function PedidosEmpleado() {
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const url = filtroEstado
-          ? `http://localhost:8080/api/pedidos/estado/${filtroEstado}`
-          : 'http://localhost:8080/api/pedidos';
-        const response = await fetch(url);
-        const data = await response.json();
+        const estado = filtroEstado ? validarOpcionApi(filtroEstado, ESTADOS_PERMITIDOS) : '';
+        const data = await apiFetch(estado ? `/api/pedidos/estado/${estado}` : '/api/pedidos');
         setPedidos(data);
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
@@ -27,12 +27,12 @@ export default function PedidosEmpleado() {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       setErrorEstado('');
-      const response = await fetch(`http://localhost:8080/api/pedidos/${id}/estado/${nuevoEstado}`, {
+      const pedidoId = validarIdApi(id);
+      const estado = validarOpcionApi(nuevoEstado, ESTADOS_PERMITIDOS);
+      await apiFetch(`/api/pedidos/${pedidoId}/estado/${estado}`, {
         method: 'PUT',
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || 'No se pudo actualizar el estado.');
-      setPedidos(pedidos.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p));
+      setPedidos(pedidos.map((pedido) => pedido.id === id ? { ...pedido, estado: nuevoEstado } : pedido));
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       setErrorEstado(error.message || 'No se pudo actualizar el estado.');

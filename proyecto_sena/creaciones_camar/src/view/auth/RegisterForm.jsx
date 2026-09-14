@@ -101,9 +101,10 @@ export default function RegisterForm() {
           <form onSubmit={handleSubmit}>
             <div className="row g-3 mb-3 text-start">
               <div className="col-6">
-                <label className="form-label">Nombres</label>
+                <label className="form-label" htmlFor="register-nombres">Nombres</label>
                 <input
                   type="text"
+                  id="register-nombres"
                   name="nombres"
                   className="form-control"
                   value={formData.nombres}
@@ -112,9 +113,10 @@ export default function RegisterForm() {
                 {fieldErrors.nombres && <small className="register-field-error">{fieldErrors.nombres}</small>}
               </div>
               <div className="col-6">
-                <label className="form-label">Apellidos</label>
+                <label className="form-label" htmlFor="register-apellidos">Apellidos</label>
                 <input
                   type="text"
+                  id="register-apellidos"
                   name="apellidos"
                   className="form-control"
                   value={formData.apellidos}
@@ -125,9 +127,10 @@ export default function RegisterForm() {
             </div>
 
             <div className="mb-3 text-start">
-              <label className="form-label">NUIP</label>
+              <label className="form-label" htmlFor="register-nuip">NUIP</label>
               <input
                 type="text"
+                id="register-nuip"
                 name="nuip"
                 className="form-control"
                 value={formData.nuip}
@@ -140,9 +143,10 @@ export default function RegisterForm() {
             </div>
 
             <div className="mb-3 text-start">
-              <label className="form-label">Email</label>
+              <label className="form-label" htmlFor="register-email">Email</label>
               <input
                 type="text"
+                id="register-email"
                 name="email"
                 className="form-control"
                 value={formData.email}
@@ -152,9 +156,10 @@ export default function RegisterForm() {
             </div>
 
             <div className="mb-3 text-start">
-              <label className="form-label">Teléfono</label>
+              <label className="form-label" htmlFor="register-telefono">Teléfono</label>
               <input
                 type="tel"
+                id="register-telefono"
                 name="telefono"
                 className="form-control"
                 value={formData.telefono}
@@ -164,9 +169,10 @@ export default function RegisterForm() {
             </div>
 
             <div className="mb-3 text-start">
-              <label className="form-label">Contraseña</label>
+              <label className="form-label" htmlFor="register-password">Contraseña</label>
               <input
                 type="password"
+                id="register-password"
                 name="password"
                 className="form-control"
                 value={formData.password}
@@ -176,9 +182,10 @@ export default function RegisterForm() {
             </div>
 
             <div className="mb-4 text-start">
-              <label className="form-label">Confirmar contraseña</label>
+              <label className="form-label" htmlFor="register-confirm-password">Confirmar contraseña</label>
               <input
                 type="password"
+                id="register-confirm-password"
                 name="confirmPassword"
                 className="form-control"
                 value={formData.confirmPassword}

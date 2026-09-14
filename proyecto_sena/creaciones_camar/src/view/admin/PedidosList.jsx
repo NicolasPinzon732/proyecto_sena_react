@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
+import { apiFetch, validarIdApi, validarOpcionApi } from '../../utils/api';
 
 const ESTADOS_PEDIDO = {
   pendiente: 'Pendiente',
@@ -12,6 +13,7 @@ const ESTADOS_PEDIDO = {
   entregado: 'Entregado',
   cancelado: 'Cancelado',
 };
+const ESTADOS_PERMITIDOS = Object.keys(ESTADOS_PEDIDO);
 
 export default function PedidosList() {
   const navigate = useNavigate();
@@ -56,11 +58,8 @@ export default function PedidosList() {
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const url = filtroEstado
-          ? `http://localhost:8080/api/pedidos/estado/${filtroEstado}`
-          : 'http://localhost:8080/api/pedidos';
-        const response = await fetch(url);
-        const data = await response.json();
+        const estado = filtroEstado ? validarOpcionApi(filtroEstado, ESTADOS_PERMITIDOS) : '';
+        const data = await apiFetch(estado ? `/api/pedidos/estado/${estado}` : '/api/pedidos');
         setPedidos(data);
         setPagina(1);
       } catch (error) {
@@ -117,12 +116,12 @@ export default function PedidosList() {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       setErrorEstado('');
-      const response = await fetch(`http://localhost:8080/api/pedidos/${id}/estado/${nuevoEstado}`, {
+      const pedidoId = validarIdApi(id);
+      const estado = validarOpcionApi(nuevoEstado, ESTADOS_PERMITIDOS);
+      await apiFetch(`/api/pedidos/${pedidoId}/estado/${estado}`, {
         method: 'PUT',
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || 'No se pudo cambiar el estado del pedido.');
-      setPedidos(pedidos.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p));
+      setPedidos(pedidos.map((pedido) => pedido.id === id ? { ...pedido, estado: nuevoEstado } : pedido));
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       setErrorEstado(error.message || 'No se pudo cambiar el estado del pedido.');

@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import HomeNavbar from '../shared/HomeNavbar';
+import { apiFetch } from '../../utils/api';
 
 export default function ProductosList() {
   const [productos, setProductos] = useState([]);
@@ -13,7 +14,8 @@ export default function ProductosList() {
   const [pagina, setPagina] = useState(1);
   const [productosPorPagina, setProductosPorPagina] = useState(10);
 
-  const categorias = [...new Set(productos.map((producto) => producto.categoria?.tipoCategoria).filter(Boolean))].sort();
+  const categorias = [...new Set(productos.map((producto) => producto.categoria?.tipoCategoria).filter(Boolean))]
+    .sort((categoriaA, categoriaB) => categoriaA.localeCompare(categoriaB));
   const productosFiltrados = productos.filter((producto) => {
     const stock = Number(producto.stockTotal || 0);
     const precio = Number(producto.precio || 0);
@@ -49,11 +51,9 @@ export default function ProductosList() {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const url = busqueda
-          ? `http://localhost:8080/api/productos/buscar?nombre=${busqueda}`
-          : 'http://localhost:8080/api/productos/activos';
-        const response = await fetch(url);
-        const data = await response.json();
+        const data = busqueda
+          ? await apiFetch(`/api/productos/buscar?nombre=${encodeURIComponent(busqueda)}`)
+          : await apiFetch('/api/productos/activos');
         setProductos(data);
         setPagina(1);
       } catch (error) {
@@ -110,7 +110,7 @@ export default function ProductosList() {
   const handleEliminar = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
       try {
-        await fetch(`http://localhost:8080/api/productos/${id}`, { method: 'DELETE' });
+        await apiFetch(`/api/productos/${encodeURIComponent(String(id))}`, { method: 'DELETE' });
         setProductos(productos.filter(p => p.id !== id));
       } catch (error) {
         console.error('Error al eliminar producto:', error);

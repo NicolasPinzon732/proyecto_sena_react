@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import HomeNavbar from '../shared/HomeNavbar';
+import { apiFetch, validarIdApi, validarOpcionApi } from '../../utils/api';
+
+const ROLES_PERMITIDOS = ['cliente', 'admin', 'empleado'];
 
 export default function UsuariosList() {
   const [usuarios, setUsuarios] = useState([]);
@@ -11,11 +14,8 @@ export default function UsuariosList() {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const url = filtroRol
-          ? `http://localhost:8080/api/usuarios/rol/${filtroRol}`
-          : 'http://localhost:8080/api/usuarios/activos';
-        const response = await fetch(url);
-        const data = await response.json();
+        const rol = filtroRol ? validarOpcionApi(filtroRol, ROLES_PERMITIDOS) : '';
+        const data = await apiFetch(rol ? `/api/usuarios/rol/${rol}` : '/api/usuarios/activos');
         setUsuarios(data);
       } catch (error) {
         console.error('Error al cargar usuarios:', error);
@@ -29,11 +29,9 @@ export default function UsuariosList() {
     if (!usuarioAEliminar) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/usuarios/${usuarioAEliminar.id}`, { method: 'DELETE' });
-      if (!response.ok) {
-        throw new Error('No se pudo eliminar el usuario.');
-      }
-      setUsuarios(usuarios.filter(u => u.id !== usuarioAEliminar.id));
+      const id = validarIdApi(usuarioAEliminar.id);
+      await apiFetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+      setUsuarios(usuarios.filter((usuario) => usuario.id !== usuarioAEliminar.id));
       setUsuarioAEliminar(null);
     } catch (errorEliminar) {
       console.error('Error al eliminar usuario:', errorEliminar);

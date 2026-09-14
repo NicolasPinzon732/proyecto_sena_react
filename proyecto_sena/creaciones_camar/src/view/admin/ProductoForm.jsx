@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
+import { apiFetch, validarIdApi } from '../../utils/api';
 
 const CATEGORIAS_PERMITIDAS = [
   "Cuero",
@@ -69,8 +70,7 @@ export default function ProductoForm() {
     const fetchProducto = async () => {
       if (id) {
         try {
-          const response = await fetch(`http://localhost:8080/api/productos/${id}`);
-          const data = await response.json();
+          const data = await apiFetch(`/api/productos/${validarIdApi(id)}`);
           setFormData(data);
         } catch (error) {
           console.error('Error al cargar producto:', error);
@@ -183,19 +183,14 @@ export default function ProductoForm() {
     try {
       const method = id ? 'PUT' : 'POST';
       const url = id
-        ? `http://localhost:8080/api/productos/${id}`
-        : 'http://localhost:8080/api/productos';
+        ? `/api/productos/${validarIdApi(id)}`
+        : '/api/productos';
 
-      const response = await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.message || 'No se pudo guardar el producto.');
-      }
       navigate('/admin/productos');
     } catch (error) {
       console.error('Error al guardar producto:', error);
@@ -239,9 +234,10 @@ export default function ProductoForm() {
           )}
           <div className="row g-3">
             <div className="col-12 col-md-6">
-              <label className="form-label">Nombre</label>
+              <label className="form-label" htmlFor="producto-nombre">Nombre</label>
               <input
                 type="text"
+                id="producto-nombre"
                 name="nombre"
                 className="form-control"
                 value={formData.nombre}
@@ -250,7 +246,7 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label">Categoría</label>
+              <label className="form-label" htmlFor="producto-categoria">Categoría</label>
               <select
                 name="categoria"
                 className="form-select"
@@ -270,9 +266,10 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label">Precio (COP)</label>
+              <label className="form-label" htmlFor="producto-precio">Precio (COP)</label>
               <input
                 type="number"
+                id="producto-precio"
                 name="precio"
                 className="form-control"
                 value={formData.precio}
@@ -281,9 +278,10 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label">Stock total calculado</label>
+              <label className="form-label" htmlFor="producto-stock">Stock total calculado</label>
               <input
                 type="number"
+                id="producto-stock"
                 name="stockTotal"
                 className="form-control"
                 value={formData.stockTotal}
@@ -292,9 +290,10 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12">
-              <label className="form-label">Descripción corta</label>
+              <label className="form-label" htmlFor="producto-descripcion-corta">Descripción corta</label>
               <input
                 type="text"
+                id="producto-descripcion-corta"
                 name="descripcionCorta"
                 className="form-control"
                 value={formData.descripcionCorta}
@@ -303,9 +302,10 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12">
-              <label className="form-label">Descripción</label>
+              <label className="form-label" htmlFor="producto-descripcion">Descripción</label>
               <textarea
                 name="descripcion"
+                id="producto-descripcion"
                 className="form-control"
                 value={formData.descripcion}
                 onChange={handleChange}

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link, useNavigate } from 'react-router-dom';
-import { esEmailValido } from '../../utils/validacionesRegistro';
 
 const getHomeRouteByRole = (rol) => {
   const role = String(rol || '').trim().toLowerCase();
@@ -28,7 +27,7 @@ export default function LoginForm() {
       return;
     }
 
-    if (!esEmailValido(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Correo o contraseña incorrectos.');
       return;
     }
@@ -77,10 +76,9 @@ export default function LoginForm() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3 text-start">
-              <label className="form-label" htmlFor="login-email">Correo</label>
+              <label className="form-label">Correo</label>
               <input
                 type="text"
-                id="login-email"
                 className="form-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -89,10 +87,9 @@ export default function LoginForm() {
             </div>
 
             <div className="mb-4 text-start">
-              <label className="form-label" htmlFor="login-password">Contraseña</label>
+              <label className="form-label">Contraseña</label>
               <input
                 type="password"
-                id="login-password"
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

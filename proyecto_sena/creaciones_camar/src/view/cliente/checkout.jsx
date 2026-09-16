@@ -201,10 +201,9 @@ export default function Checkout() {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold" htmlFor="checkout-direccion">Dirección</label>
+            <label className="form-label fw-bold">Dirección</label>
             <input
               type="text"
-              id="checkout-direccion"
               className="form-control"
               placeholder="Ej: Calle 15 #20-35"
               value={form.direccion}
@@ -214,10 +213,9 @@ export default function Checkout() {
 
           <div className="row">
             <div className="col-md-6 mb-3">
-              <label className="form-label fw-bold" htmlFor="checkout-codigo-postal">Código postal</label>
+              <label className="form-label fw-bold">Código postal</label>
               <input
                 type="text"
-                id="checkout-codigo-postal"
                 className="form-control"
                 value={form.codigo_postal}
                 onChange={(e) => actualizarCampo(e.target.value, "codigo_postal")}
@@ -226,10 +224,9 @@ export default function Checkout() {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold" htmlFor="checkout-telefono">Teléfono</label>
+            <label className="form-label fw-bold">Teléfono</label>
             <input
               type="tel"
-              id="checkout-telefono"
               className="form-control"
               value={form.telefono}
               onChange={(e) => actualizarCampo(e.target.value, "telefono")}
@@ -237,10 +234,9 @@ export default function Checkout() {
           </div>
 
           <div className="mb-3">
-            <label className="form-label fw-bold" htmlFor="checkout-metodo-pago">Método de pago</label>
+            <label className="form-label fw-bold">Método de pago</label>
             <select
               className="form-select"
-              id="checkout-metodo-pago"
               value={form.metodo_pago}
               onChange={(e) => cambiarMetodoPago(e.target.value)}
             >
@@ -298,12 +294,11 @@ export default function Checkout() {
 
             <form onSubmit={confirmarPedido} className="checkout-payment-form">
               {CAMPOS_PAGO[form.metodo_pago].map((campo) => (
-                <label key={campo.nombre} htmlFor={`pago-${campo.nombre}`}>
+                <label key={campo.nombre}>
                   <span>{campo.etiqueta}</span>
                   {campo.tipo === "select" ? (
                     <select
                       value={datosPago[campo.nombre] || ""}
-                      id={`pago-${campo.nombre}`}
                       onChange={(event) => setDatosPago((anterior) => ({ ...anterior, [campo.nombre]: event.target.value }))}
                     >
                       <option value="">{campo.placeholder}</option>
@@ -312,7 +307,6 @@ export default function Checkout() {
                   ) : (
                     <input
                       type={campo.tipo}
-                      id={`pago-${campo.nombre}`}
                       value={datosPago[campo.nombre] || ""}
                       placeholder={campo.placeholder}
                       autoComplete={campo.autocomplete || "off"}

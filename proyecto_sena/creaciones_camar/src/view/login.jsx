@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import { esEmailValido } from "./utils/validacionesRegistro";
 
 
 function Login() {
@@ -21,7 +20,7 @@ function Login() {
             return;
         }
 
-        if (!esEmailValido(correo)) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) {
             setError("Correo o contraseña incorrectos");
             return;
         }

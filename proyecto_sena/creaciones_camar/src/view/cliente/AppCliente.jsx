@@ -210,11 +210,10 @@ export default function AppCliente() {
                 { campo: "email", label: "Correo", tipo: "email" },
               ].map(({ campo, label, tipo }) => (
                 <div key={campo}>
-                  <label htmlFor={`perfil-${campo}`}>{label}</label>
+                  <label>{label}</label>
                   <div className="user-field">
                     <input
                       type={tipo}
-                      id={`perfil-${campo}`}
                       value={usuario[campo] || ""}
                       disabled={campoEditable !== campo}
                       onChange={(e) => manejarCambio(campo, e.target.value)}
@@ -237,11 +236,10 @@ export default function AppCliente() {
                 </div>
               ))}
 
-              <label htmlFor="perfil-password">Contraseña</label>
+              <label>Contraseña</label>
               <div className="user-field">
                 <input
                   type="password"
-                  id="perfil-password"
                   placeholder="Nueva contraseña"
                   value={passwordNueva}
                   disabled={campoEditable !== "password"}

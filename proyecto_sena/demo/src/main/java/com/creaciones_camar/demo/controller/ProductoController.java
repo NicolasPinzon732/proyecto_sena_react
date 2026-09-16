@@ -101,6 +101,12 @@ public class ProductoController {
         return new ResponseEntity<>(productos, HttpStatus.OK);
     }
 
+    @GetMapping("/inactivos")
+    public ResponseEntity<List<Producto>> obtenerInactivos() {
+        List<Producto> productos = productoService.obtenerInactivos();
+        return new ResponseEntity<>(productos, HttpStatus.OK);
+    }
+
     @GetMapping("/categoria/{categoriaId}")
     public ResponseEntity<List<Producto>> obtenerPorCategoria(@PathVariable Long categoriaId) {
         List<Producto> productos = productoService.obtenerPorCategoria(categoriaId);

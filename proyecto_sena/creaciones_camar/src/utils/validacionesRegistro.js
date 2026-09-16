@@ -1,19 +1,7 @@
 const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO_REGEX = /^\+?\d{7,15}$/;
 const NUIP_REGEX = /^\d{4,15}$/;
-
-export function esEmailValido(valor) {
-  const partes = limpiarTexto(valor).split('@');
-  if (partes.length !== 2) return false;
-  const [usuario, dominio] = partes;
-  const dominioPartes = dominio.split('.');
-  const extension = dominioPartes.at(-1) || '';
-  return usuario.length > 0 && usuario.length <= 64
-    && dominio.length <= 255
-    && dominioPartes.length >= 2
-    && dominioPartes.every((parte) => parte.length > 0 && !/\s/.test(parte))
-    && extension.length >= 2 && extension.length <= 63;
-}
 
 function limpiarTexto(valor) {
   return String(valor ?? '').trim();
@@ -47,7 +35,7 @@ export function validarCampoRegistro(campo, valor, formData = {}) {
     if (!texto) {
       return 'El correo es obligatorio.';
     }
-    if (!esEmailValido(texto)) {
+    if (!EMAIL_REGEX.test(texto)) {
       return 'Ingresa un correo válido con formato usuario@dominio.com.';
     }
   }

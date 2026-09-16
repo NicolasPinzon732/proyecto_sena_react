@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
-import { esEmailValido, validarCampoRegistro, validarRegistroCompleto } from '../utils/validacionesRegistro';
+import { validarCampoRegistro, validarRegistroCompleto } from '../utils/validacionesRegistro';
 
 const productos = [
   {
@@ -214,7 +214,7 @@ function AuthModal({ onClose }) {
     if (!email.trim()) {
       throw new Error('El correo es obligatorio.');
     }
-    if (!esEmailValido(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       throw new Error('Correo o contraseña incorrectos.');
     }
     if (!password) {

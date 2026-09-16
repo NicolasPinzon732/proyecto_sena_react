@@ -3,7 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import HomeNavbar from '../shared/HomeNavbar';
-import { apiFetch } from '../../utils/api';
 
 export default function ProductosList() {
   const [productos, setProductos] = useState([]);
@@ -14,8 +13,7 @@ export default function ProductosList() {
   const [pagina, setPagina] = useState(1);
   const [productosPorPagina, setProductosPorPagina] = useState(10);
 
-  const categorias = [...new Set(productos.map((producto) => producto.categoria?.tipoCategoria).filter(Boolean))]
-    .sort((categoriaA, categoriaB) => categoriaA.localeCompare(categoriaB));
+  const categorias = [...new Set(productos.map((producto) => producto.categoria?.tipoCategoria).filter(Boolean))].sort();
   const productosFiltrados = productos.filter((producto) => {
     const stock = Number(producto.stockTotal || 0);
     const precio = Number(producto.precio || 0);
@@ -51,9 +49,11 @@ export default function ProductosList() {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const data = busqueda
-          ? await apiFetch(`/api/productos/buscar?nombre=${encodeURIComponent(busqueda)}`)
-          : await apiFetch('/api/productos/activos');
+        const url = busqueda
+          ? `http://localhost:8080/api/productos/buscar?nombre=${busqueda}`
+          : 'http://localhost:8080/api/productos/activos';
+        const response = await fetch(url);
+        const data = await response.json();
         setProductos(data);
         setPagina(1);
       } catch (error) {
@@ -107,17 +107,6 @@ export default function ProductosList() {
     documento.save('reporte-productos.pdf');
   };
 
-  const handleEliminar = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
-      try {
-        await apiFetch(`/api/productos/${encodeURIComponent(String(id))}`, { method: 'DELETE' });
-        setProductos(productos.filter(p => p.id !== id));
-      } catch (error) {
-        console.error('Error al eliminar producto:', error);
-      }
-    }
-  };
-
   return (
     <>
       <HomeNavbar role="admin" />
@@ -132,6 +121,9 @@ export default function ProductosList() {
           <button type="button" className="admin-report-button" onClick={descargarReporte} disabled={!productosFiltrados.length}>
             <i className="bi bi-file-earmark-pdf me-1"></i> Reporte PDF
           </button>
+          <a href="/admin/productos/inactivos" className="admin-secondary-button">
+            <i className="bi bi-box-seam me-1"></i> Productos inactivos
+          </a>
           <a href="/admin/productos/crear" className="admin-primary-button">
             <i className="bi bi-plus-circle me-1"></i> Nuevo producto
           </a>
@@ -211,14 +203,6 @@ export default function ProductosList() {
                   >
                     <i className="bi bi-pencil"></i>
                   </a>
-                  <button
-                    type="button"
-                    className="admin-product-icon-button admin-product-icon-button--danger"
-                    onClick={() => handleEliminar(producto.id)}
-                    aria-label={`Eliminar ${producto.nombre}`}
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
                 </div>
               </div>
 

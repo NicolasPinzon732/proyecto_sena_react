@@ -3,7 +3,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
 import { validarRegistroCompleto } from '../../utils/validacionesRegistro';
-import { apiFetch, validarIdApi } from '../../utils/api';
 
 export default function UsuarioForm({ self = false }) {
   const { id } = useParams();
@@ -40,7 +39,8 @@ export default function UsuarioForm({ self = false }) {
     const fetchUsuario = async () => {
       if (usuarioId) {
         try {
-          const data = await apiFetch(`/api/usuarios/${validarIdApi(usuarioId)}`);
+          const response = await fetch(`http://localhost:8080/api/usuarios/${usuarioId}`);
+          const data = await response.json();
           setFormData(data);
         } catch (error) {
           console.error('Error al cargar usuario:', error);
@@ -96,8 +96,8 @@ export default function UsuarioForm({ self = false }) {
     try {
       const method = usuarioId ? 'PUT' : 'POST';
       const url = usuarioId
-        ? `/api/usuarios/${validarIdApi(usuarioId)}`
-        : '/api/usuarios';
+        ? `http://localhost:8080/api/usuarios/${usuarioId}`
+        : 'http://localhost:8080/api/usuarios';
 
       const datosUsuario = Object.fromEntries(
         Object.entries(formData).filter(([campo]) => (
@@ -105,11 +105,16 @@ export default function UsuarioForm({ self = false }) {
           && (!self || campo !== 'rol')
         ))
       );
-      await apiFetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosUsuario),
       });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'No se pudo guardar el usuario.');
+      }
       navigate(self ? (rolSesion === 'admin' ? '/admin' : '/empleado') : '/admin/usuarios');
     } catch (error) {
       console.error('Error al guardar usuario:', error);
@@ -152,10 +157,9 @@ export default function UsuarioForm({ self = false }) {
           <div className="row g-3">
             {!usuarioId && (
               <div className="col-12 col-md-6">
-                <label className="form-label" htmlFor="usuario-nuip-nuevo">NUIP</label>
+                <label className="form-label">NUIP</label>
                 <input
                   type="text"
-                  id="usuario-nuip-nuevo"
                   name="nuip"
                   className="form-control"
                   value={formData.nuip}
@@ -168,7 +172,7 @@ export default function UsuarioForm({ self = false }) {
             )}
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="usuario-tipo-documento">Tipo de documento</label>
+              <label className="form-label">Tipo de documento</label>
               <select
                 name="tipoDocumento"
                 className="form-select"
@@ -186,10 +190,9 @@ export default function UsuarioForm({ self = false }) {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="usuario-nombres">Nombres</label>
+              <label className="form-label">Nombres</label>
               <input
                 type="text"
-                id="usuario-nombres"
                 name="nombres"
                 className="form-control"
                 value={formData.nombres}
@@ -199,10 +202,9 @@ export default function UsuarioForm({ self = false }) {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="usuario-apellidos">Apellidos</label>
+              <label className="form-label">Apellidos</label>
               <input
                 type="text"
-                id="usuario-apellidos"
                 name="apellidos"
                 className="form-control"
                 value={formData.apellidos}
@@ -213,10 +215,9 @@ export default function UsuarioForm({ self = false }) {
 
             {id && (
               <div className="col-12 col-md-6">
-                <label className="form-label" htmlFor="usuario-nuip-edicion">NUIP</label>
+                <label className="form-label">NUIP</label>
                 <input
                   type="text"
-                  id="usuario-nuip-edicion"
                   name="nuip"
                   className="form-control"
                   value={formData.nuip}
@@ -229,10 +230,9 @@ export default function UsuarioForm({ self = false }) {
             )}
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="usuario-email">Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="text"
-                id="usuario-email"
                 name="email"
                 className="form-control"
                 value={formData.email}
@@ -242,10 +242,9 @@ export default function UsuarioForm({ self = false }) {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="usuario-telefono">Teléfono</label>
+              <label className="form-label">Teléfono</label>
               <input
                 type="tel"
-                id="usuario-telefono"
                 name="telefono"
                 className="form-control"
                 value={formData.telefono}
@@ -256,7 +255,7 @@ export default function UsuarioForm({ self = false }) {
 
             {!self && (
               <div className="col-12 col-md-6">
-                <label className="form-label" htmlFor="usuario-rol">Rol</label>
+                <label className="form-label">Rol</label>
                 <select
                   name="rol"
                   className="form-select"
@@ -272,10 +271,9 @@ export default function UsuarioForm({ self = false }) {
 
             {(!usuarioId || self) && (
               <div className="col-12 col-md-6">
-                <label className="form-label" htmlFor="usuario-password">Contraseña</label>
+                <label className="form-label">Contraseña</label>
                 <input
                   type="password"
-                  id="usuario-password"
                   name="password"
                   className="form-control"
                   value={formData.password}

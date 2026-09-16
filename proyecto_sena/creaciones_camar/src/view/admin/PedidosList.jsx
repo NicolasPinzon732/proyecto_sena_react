@@ -4,7 +4,6 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
-import { apiFetch, validarIdApi, validarOpcionApi } from '../../utils/api';
 
 const ESTADOS_PEDIDO = {
   pendiente: 'Pendiente',
@@ -13,7 +12,6 @@ const ESTADOS_PEDIDO = {
   entregado: 'Entregado',
   cancelado: 'Cancelado',
 };
-const ESTADOS_PERMITIDOS = Object.keys(ESTADOS_PEDIDO);
 
 export default function PedidosList() {
   const navigate = useNavigate();
@@ -58,8 +56,11 @@ export default function PedidosList() {
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const estado = filtroEstado ? validarOpcionApi(filtroEstado, ESTADOS_PERMITIDOS) : '';
-        const data = await apiFetch(estado ? `/api/pedidos/estado/${estado}` : '/api/pedidos');
+        const url = filtroEstado
+          ? `http://localhost:8080/api/pedidos/estado/${filtroEstado}`
+          : 'http://localhost:8080/api/pedidos';
+        const response = await fetch(url);
+        const data = await response.json();
         setPedidos(data);
         setPagina(1);
       } catch (error) {
@@ -116,12 +117,12 @@ export default function PedidosList() {
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       setErrorEstado('');
-      const pedidoId = validarIdApi(id);
-      const estado = validarOpcionApi(nuevoEstado, ESTADOS_PERMITIDOS);
-      await apiFetch(`/api/pedidos/${pedidoId}/estado/${estado}`, {
+      const response = await fetch(`http://localhost:8080/api/pedidos/${id}/estado/${nuevoEstado}`, {
         method: 'PUT',
       });
-      setPedidos(pedidos.map((pedido) => pedido.id === id ? { ...pedido, estado: nuevoEstado } : pedido));
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'No se pudo cambiar el estado del pedido.');
+      setPedidos(pedidos.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p));
     } catch (error) {
       console.error('Error al cambiar estado:', error);
       setErrorEstado(error.message || 'No se pudo cambiar el estado del pedido.');
@@ -237,11 +238,11 @@ export default function PedidosList() {
                 <div className="empleado-pedido-actions">
                   <span>Actualizar estado</span>
                   <div>
-                    {['confirmado', 'enviado', 'entregado'].map((estadoSiguiente) => (
+                    {['pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado'].map((estadoSiguiente) => (
                       <button
                         key={estadoSiguiente}
                         type="button"
-                        className={`empleado-status-button ${estado === estadoSiguiente ? `active ${estadoSiguiente === 'confirmado' ? 'confirmed' : estadoSiguiente === 'enviado' ? 'shipped' : 'delivered'}` : ''}`}
+                        className={`empleado-status-button ${estado === estadoSiguiente ? `active ${estadoSiguiente === 'pendiente' ? 'pending' : estadoSiguiente === 'confirmado' ? 'confirmed' : estadoSiguiente === 'enviado' ? 'shipped' : estadoSiguiente === 'entregado' ? 'delivered' : 'cancelled'}` : ''}`}
                         onClick={() => cambiarEstado(pedido.id, estadoSiguiente)}
                       >
                         {ESTADOS_PEDIDO[estadoSiguiente]}

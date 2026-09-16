@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import HomeNavbar from '../shared/HomeNavbar';
-import { apiFetch, validarIdApi } from '../../utils/api';
 
 const CATEGORIAS_PERMITIDAS = [
   "Cuero",
@@ -46,12 +45,15 @@ export default function ProductoForm() {
     imagen: '',
     categoria: { id: '' },
     tallas: '',
+    activo: true,
   });
   const [categorias, setCategorias] = useState([]);
+  const [tallasDisponibles, setTallasDisponibles] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(id ? true : false);
   const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [nombreImagen, setNombreImagen] = useState('');
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +64,9 @@ export default function ProductoForm() {
           CATEGORIAS_PERMITIDAS.includes(String(cat.tipoCategoria || '').trim())
         );
         setCategorias(categoriasValidas);
+        const tallasRes = await fetch('http://localhost:8080/api/tallas');
+        const tallasList = await tallasRes.json();
+        setTallasDisponibles(Array.isArray(tallasList) ? tallasList : []);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       }
@@ -70,7 +75,8 @@ export default function ProductoForm() {
     const fetchProducto = async () => {
       if (id) {
         try {
-          const data = await apiFetch(`/api/productos/${validarIdApi(id)}`);
+          const response = await fetch(`http://localhost:8080/api/productos/${id}`);
+          const data = await response.json();
           setFormData(data);
         } catch (error) {
           console.error('Error al cargar producto:', error);
@@ -133,7 +139,7 @@ export default function ProductoForm() {
 
   const actualizarTalla = (indice, campo, valor) => {
     const tallas = obtenerTallas(formData.tallas, formData.stockTotal).map((talla, index) => (
-      index === indice ? { ...talla, [campo]: campo === 'cantidad' ? Math.max(0, Number(valor || 0)) : valor } : talla
+      index === indice ? { ...talla, [campo]: campo === 'cantidad' ? (valor === '' ? '' : Math.max(0, Number(valor))) : valor } : talla
     ));
     setFormData((prev) => ({
       ...prev,
@@ -142,8 +148,12 @@ export default function ProductoForm() {
     }));
   };
 
-  const agregarTalla = () => {
-    const tallas = [...obtenerTallas(formData.tallas, formData.stockTotal), { talla: '', cantidad: 0 }];
+  const seleccionarTalla = (nombreTalla) => {
+    const tallasActuales = obtenerTallas(formData.tallas, formData.stockTotal);
+    const tallaSeleccionada = tallasActuales.some((talla) => talla.talla === nombreTalla);
+    const tallas = tallaSeleccionada
+      ? tallasActuales.filter((talla) => talla.talla !== nombreTalla)
+      : [...tallasActuales, { talla: nombreTalla, cantidad: 0 }];
     setFormData((prev) => ({
       ...prev,
       tallas: JSON.stringify(tallas),
@@ -158,6 +168,31 @@ export default function ProductoForm() {
       tallas: JSON.stringify(tallas),
       stockTotal: tallas.reduce((total, talla) => total + Number(talla.cantidad || 0), 0),
     }));
+  };
+
+  const procesarCambioEstado = async (activar) => {
+    try {
+      setError('');
+      const accion = activar ? 'activar' : 'desactivar';
+      const response = await fetch(`http://localhost:8080/api/productos/${id}/${accion}`, { method: 'PUT' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'No se pudo cambiar el estado del producto.');
+      navigate('/admin/productos');
+    } catch (estadoError) {
+      setError(estadoError.message || 'No se pudo cambiar el estado del producto.');
+    }
+  };
+
+  const cambiarEstadoProducto = async () => {
+    if (!id) return;
+
+    const activar = formData.activo === false;
+    if (!activar) {
+      setMostrarConfirmacion(true);
+      return;
+    }
+
+    await procesarCambioEstado(true);
   };
 
   const handleSubmit = async (e) => {
@@ -183,20 +218,31 @@ export default function ProductoForm() {
     try {
       const method = id ? 'PUT' : 'POST';
       const url = id
-        ? `/api/productos/${validarIdApi(id)}`
-        : '/api/productos';
+        ? `http://localhost:8080/api/productos/${id}`
+        : 'http://localhost:8080/api/productos';
 
-      await apiFetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || 'No se pudo guardar el producto.');
+      }
       navigate('/admin/productos');
     } catch (error) {
       console.error('Error al guardar producto:', error);
       setError(error.message || 'No se pudo guardar el producto.');
     }
   };
+
+  const tallasRegistradas = obtenerTallas(formData.tallas, formData.stockTotal);
+  const nombresTallas = [...new Set([
+    ...tallasDisponibles.map((talla) => talla.nombre),
+    ...tallasRegistradas.map((talla) => talla.talla).filter(Boolean),
+  ])];
 
   if (loading) {
     return <div className="text-center mt-5"><p>Cargando...</p></div>;
@@ -234,10 +280,9 @@ export default function ProductoForm() {
           )}
           <div className="row g-3">
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="producto-nombre">Nombre</label>
+              <label className="form-label">Nombre</label>
               <input
                 type="text"
-                id="producto-nombre"
                 name="nombre"
                 className="form-control"
                 value={formData.nombre}
@@ -246,7 +291,7 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="producto-categoria">Categoría</label>
+              <label className="form-label">Categoría</label>
               <select
                 name="categoria"
                 className="form-select"
@@ -266,10 +311,9 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="producto-precio">Precio (COP)</label>
+              <label className="form-label">Precio (COP)</label>
               <input
                 type="number"
-                id="producto-precio"
                 name="precio"
                 className="form-control"
                 value={formData.precio}
@@ -278,10 +322,9 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12 col-md-6">
-              <label className="form-label" htmlFor="producto-stock">Stock total calculado</label>
+              <label className="form-label">Stock total calculado</label>
               <input
                 type="number"
-                id="producto-stock"
                 name="stockTotal"
                 className="form-control"
                 value={formData.stockTotal}
@@ -290,10 +333,9 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12">
-              <label className="form-label" htmlFor="producto-descripcion-corta">Descripción corta</label>
+              <label className="form-label">Descripción corta</label>
               <input
                 type="text"
-                id="producto-descripcion-corta"
                 name="descripcionCorta"
                 className="form-control"
                 value={formData.descripcionCorta}
@@ -302,10 +344,9 @@ export default function ProductoForm() {
             </div>
 
             <div className="col-12">
-              <label className="form-label" htmlFor="producto-descripcion">Descripción</label>
+              <label className="form-label">Descripción</label>
               <textarea
                 name="descripcion"
-                id="producto-descripcion"
                 className="form-control"
                 value={formData.descripcion}
                 onChange={handleChange}
@@ -317,33 +358,48 @@ export default function ProductoForm() {
               <div className="admin-size-heading">
                 <div>
                   <label className="form-label mb-1">Inventario por talla</label>
-                  <p className="admin-form-help mb-0">Unidades disponibles por talla.</p>
+                  <p className="admin-form-help mb-0">Selecciona las tallas que tendrá este producto.</p>
                 </div>
                 <span className="admin-size-total"><i className="bi bi-box-seam"></i>{formData.stockTotal} unidades</span>
-                <button type="button" className="admin-size-add" onClick={agregarTalla}>
-                  <i className="bi bi-plus-lg"></i>Añadir
-                </button>
               </div>
-              <div className="admin-size-grid">
-                {obtenerTallas(formData.tallas, formData.stockTotal).map((talla, index) => (
-                  <div className="admin-size-row" key={`${talla.talla}-${index}`}>
-                    <div className="admin-size-row__top">
-                      <span className="admin-size-index">Talla {String(index + 1).padStart(2, '0')}</span>
-                      <button type="button" className="admin-size-remove" onClick={() => eliminarTalla(index)} aria-label={`Eliminar talla ${talla.talla || index + 1}`}><i className="bi bi-trash3"></i></button>
+              <div className="admin-size-options" aria-label="Tallas disponibles">
+                {nombresTallas.map((nombreTalla) => {
+                  const indiceTalla = tallasRegistradas.findIndex((talla) => talla.talla === nombreTalla);
+                  const seleccionada = indiceTalla !== -1;
+                  const tallaSeleccionada = seleccionada ? tallasRegistradas[indiceTalla] : null;
+                  return (
+                    <div
+                      className={`admin-size-option-wrap ${seleccionada ? 'admin-size-option-wrap--selected' : ''}`}
+                      key={nombreTalla}
+                    >
+                      <button
+                        type="button"
+                        className={`admin-size-option ${seleccionada ? 'admin-size-option--selected' : ''}`}
+                        onClick={() => seleccionarTalla(nombreTalla)}
+                        aria-pressed={seleccionada}
+                      >
+                        {seleccionada && <i className="bi bi-check-circle-fill"></i>}
+                        {nombreTalla}
+                      </button>
+                      {seleccionada && (
+                        <label className="admin-size-quantity">
+                          <span>Cantidad</span>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={tallaSeleccionada.cantidad}
+                            onChange={(e) => actualizarTalla(indiceTalla, 'cantidad', e.target.value)}
+                            min="0"
+                            placeholder="0"
+                          />
+                        </label>
+                      )}
                     </div>
-                    <label>
-                      <span>Talla</span>
-                      <input type="text" className="form-control" value={talla.talla} onChange={(e) => actualizarTalla(index, 'talla', e.target.value)} placeholder="Ej: M" />
-                    </label>
-                    <label>
-                      <span>Unidades disponibles</span>
-                      <input type="number" className="form-control" value={talla.cantidad} onChange={(e) => actualizarTalla(index, 'cantidad', e.target.value)} min="0" placeholder="0" />
-                    </label>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {!obtenerTallas(formData.tallas, formData.stockTotal).length && (
-                <div className="admin-form-empty"><i className="bi bi-rulers"></i><span>Agrega una talla para comenzar a definir el inventario.</span></div>
+              {!tallasRegistradas.length && (
+                <div className="admin-form-empty"><i className="bi bi-rulers"></i><span>Selecciona una talla para definir su inventario.</span></div>
               )}
             </div>
 
@@ -374,6 +430,16 @@ export default function ProductoForm() {
           </div>
 
           <div className="admin-form-actions">
+            {id && (
+              <button
+                type="button"
+                className={formData.activo === false ? 'admin-activate-button' : 'admin-deactivate-button'}
+                onClick={cambiarEstadoProducto}
+              >
+                <i className={`bi ${formData.activo === false ? 'bi-check-circle me-1' : 'bi-slash-circle me-1'}`}></i>
+                {formData.activo === false ? 'Activar producto' : 'Inactivar producto'}
+              </button>
+            )}
             <a href="/admin/productos" className="admin-secondary-button">
               Cancelar
             </a>
@@ -384,6 +450,27 @@ export default function ProductoForm() {
         </form>
       </div>
       </div>
+      {mostrarConfirmacion && (
+        <div className="producto-confirm-overlay" role="presentation">
+          <div className="producto-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="producto-confirm-title">
+            <div className="producto-confirm-icon"><i className="bi bi-exclamation-triangle"></i></div>
+            <p className="producto-confirm-kicker">Cambiar disponibilidad</p>
+            <h2 id="producto-confirm-title">¿Inactivar producto?</h2>
+            <p>Este producto dejará de aparecer en el catálogo de clientes. Podrás activarlo nuevamente después.</p>
+            <div className="producto-confirm-actions">
+              <button type="button" className="admin-secondary-button" onClick={() => setMostrarConfirmacion(false)}>
+                Cancelar
+              </button>
+              <button type="button" className="admin-deactivate-button" onClick={() => {
+                setMostrarConfirmacion(false);
+                procesarCambioEstado(false);
+              }}>
+                <i className="bi bi-slash-circle me-1"></i> Inactivar producto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

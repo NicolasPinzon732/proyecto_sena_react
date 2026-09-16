@@ -14,6 +14,7 @@ import UsuariosList from './view/admin/UsuariosList';
 import UsuariosInactivos from './view/admin/UsuariosInactivos';
 import UsuarioForm from './view/admin/UsuarioForm';
 import ProductosList from './view/admin/ProductosList';
+import ProductosInactivos from './view/admin/ProductosInactivos';
 import ProductoForm from './view/admin/ProductoForm';
 import PedidosList from './view/admin/PedidosList';
 
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="/admin/usuarios/crear" element={<ProtectedRoute requiredRol="admin"><UsuarioForm /></ProtectedRoute>} />
         <Route path="/admin/usuarios/:id/editar" element={<ProtectedRoute requiredRol="admin"><UsuarioForm /></ProtectedRoute>} />
         <Route path="/admin/productos" element={<ProtectedRoute requiredRol="admin"><ProductosList /></ProtectedRoute>} />
+        <Route path="/admin/productos/inactivos" element={<ProtectedRoute requiredRol="admin"><ProductosInactivos /></ProtectedRoute>} />
         <Route path="/admin/productos/crear" element={<ProtectedRoute requiredRol="admin"><ProductoForm /></ProtectedRoute>} />
         <Route path="/admin/productos/:id/editar" element={<ProtectedRoute requiredRol="admin"><ProductoForm /></ProtectedRoute>} />
         <Route path="/admin/pedidos" element={<ProtectedRoute requiredRol="admin"><PedidosList /></ProtectedRoute>} />

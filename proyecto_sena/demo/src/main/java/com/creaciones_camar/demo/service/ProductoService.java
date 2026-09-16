@@ -50,6 +50,10 @@ public class ProductoService {
         return productoRepository.findByActivoTrue();
     }
 
+    public List<Producto> obtenerInactivos() {
+        return productoRepository.findByActivoFalse();
+    }
+
     public List<Producto> obtenerPorCategoria(Long categoriaId) {
         return productoRepository.findByCategoriaId(categoriaId);
     }

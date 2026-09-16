@@ -40,7 +40,7 @@ export default function Catalogo() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch("/api/productos")
+    apiFetch("/api/productos/activos")
       .then((data) => setProductos(data.filter((p) => p.activo !== false)))
       .catch((err) => setError(err.message || "No se pudieron cargar los productos."))
       .finally(() => setCargando(false));

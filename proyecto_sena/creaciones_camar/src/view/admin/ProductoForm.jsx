@@ -18,6 +18,27 @@ const CATEGORIAS_PERMITIDAS = [
   "cuero"
 ];
 
+const ORDEN_TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'Única'];
+
+function ordenarTallas(tallas) {
+  const normalizar = (valor) => String(valor || '').trim();
+  const indice = (valor) => {
+    const nombre = normalizar(valor).toUpperCase();
+    const equivalencias = { XS: 0, S: 1, M: 2, L: 3, XL: 4, UNICA: 5 };
+    return Object.prototype.hasOwnProperty.call(equivalencias, nombre) ? equivalencias[nombre] : 99;
+  };
+
+  return [...tallas].sort((a, b) => {
+    const valorA = normalizar(a?.nombre ?? a?.talla ?? a);
+    const valorB = normalizar(b?.nombre ?? b?.talla ?? b);
+    const indiceA = indice(valorA);
+    const indiceB = indice(valorB);
+
+    if (indiceA !== indiceB) return indiceA - indiceB;
+    return valorA.localeCompare(valorB, 'es', { sensitivity: 'base' });
+  });
+}
+
 function obtenerTallas(valor, stockTotal) {
   try {
     const tallas = JSON.parse(valor || '[]');
@@ -66,7 +87,7 @@ export default function ProductoForm() {
         setCategorias(categoriasValidas);
         const tallasRes = await fetch('http://localhost:8080/api/tallas');
         const tallasList = await tallasRes.json();
-        setTallasDisponibles(Array.isArray(tallasList) ? tallasList : []);
+        setTallasDisponibles(Array.isArray(tallasList) ? ordenarTallas(tallasList) : []);
       } catch (error) {
         console.error('Error al cargar datos:', error);
       }
@@ -153,7 +174,7 @@ export default function ProductoForm() {
     const tallaSeleccionada = tallasActuales.some((talla) => talla.talla === nombreTalla);
     const tallas = tallaSeleccionada
       ? tallasActuales.filter((talla) => talla.talla !== nombreTalla)
-      : [...tallasActuales, { talla: nombreTalla, cantidad: 0 }];
+      : [...tallasActuales, { talla: nombreTalla, cantidad: '' }];
     setFormData((prev) => ({
       ...prev,
       tallas: JSON.stringify(tallas),
@@ -239,10 +260,12 @@ export default function ProductoForm() {
   };
 
   const tallasRegistradas = obtenerTallas(formData.tallas, formData.stockTotal);
-  const nombresTallas = [...new Set([
-    ...tallasDisponibles.map((talla) => talla.nombre),
-    ...tallasRegistradas.map((talla) => talla.talla).filter(Boolean),
-  ])];
+  const nombresTallas = ordenarTallas([
+    ...new Set([
+      ...tallasDisponibles.map((talla) => talla.nombre),
+      ...tallasRegistradas.map((talla) => talla.talla).filter(Boolean),
+    ]),
+  ]).map((talla) => (typeof talla === 'string' ? talla : talla.nombre));
 
   if (loading) {
     return <div className="text-center mt-5"><p>Cargando...</p></div>;
